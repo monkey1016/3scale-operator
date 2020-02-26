@@ -46,7 +46,7 @@ tag:
 
 ## local: push operator docker image to remote repo
 local:
-	OPERATOR_NAME=$(OPERATOR_NAME) operator-sdk up local --namespace $(NAMESPACE)
+	OPERATOR_NAME=$(OPERATOR_NAME) operator-sdk run --local --namespace $(NAMESPACE)
 
 ## e2e-setup: create OCP project for the operator
 e2e-setup:
