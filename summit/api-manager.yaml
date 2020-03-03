@@ -5,3 +5,6 @@ metadata:
 spec:
   wildcardDomain: apps-crc.testing
   resourceRequirementsEnabled: false
+  apicast:
+    stagingSpec:
+      replicas: 0

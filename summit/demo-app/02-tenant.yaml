@@ -1,0 +1,17 @@
+apiVersion: capabilities.3scale.net/v1alpha1
+kind: Tenant
+metadata:
+  name: redhat-summit-tenant
+spec:
+  username: admin
+  systemMasterUrl: https://master.apps-crc.testing
+  email: kjanania@redhat.com
+  organizationName: Red Hat
+  masterCredentialsRef:
+    name: system-seed
+  passwordCredentialsRef:
+    name: red-hat-summit-admin-secret
+    namespace: 3scale
+  tenantSecretRef:
+    name: red-hat-summit-tenant-secret
+    namespace: 3scale

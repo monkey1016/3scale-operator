@@ -1,0 +1,47 @@
+### Mapping Rules, Metrics, and Plan should be defined before the API
+apiVersion: capabilities.3scale.net/v1alpha1
+kind: MappingRule
+metadata:
+  labels:
+    api: echo-app
+  name: echo-app-get-echo
+  namespace: 3scale
+spec:
+  increment: 1
+  method: POST
+  metricRef:
+    name: echo-app-metrics
+  path: /echo
+
+---
+
+apiVersion: capabilities.3scale.net/v1alpha1
+kind: Plan
+metadata:
+  labels:
+    api: echo-app
+  name: echo-app-plan
+spec:
+  approvalRequired: false
+  default: true
+  costs:
+    costMonth: 0
+    setupFee: 0
+  limitSelector:
+    matchLabels:
+      api: echo-app
+  trialPeriod: 0
+
+---
+
+apiVersion: capabilities.3scale.net/v1alpha1
+kind: Metric
+metadata:
+  labels:
+    api: echo-app
+  name: echo-app-metrics
+  namespace: 3scale
+spec:
+  description: Counts the number of times an endpoint has been hit
+  unit: hit
+  incrementHits: true

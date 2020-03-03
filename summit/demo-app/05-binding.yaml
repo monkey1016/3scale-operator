@@ -1,0 +1,12 @@
+### After everything is created, create the binding to bring it all together
+---
+apiVersion: capabilities.3scale.net/v1alpha1
+kind: Binding
+metadata:
+  name: echo-app-binding
+spec:
+  credentialsRef:
+    name: red-hat-summit-tenant-secret
+  APISelector:
+    matchLabels:
+      environment: production
