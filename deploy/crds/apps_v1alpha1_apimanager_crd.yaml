@@ -42,6 +42,8 @@ spec:
                     replicas:
                       format: int64
                       type: integer
+                    namespace:
+                      type: string
                   type: object
                 registryURL:
                   type: string
@@ -52,6 +54,8 @@ spec:
                     replicas:
                       format: int64
                       type: integer
+                    namespace:
+                      type: string
                   type: object
               type: object
             appLabel:

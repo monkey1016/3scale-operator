@@ -2,9 +2,14 @@ apiVersion: apps.3scale.net/v1alpha1
 kind: APIManager
 metadata:
   name: default-apimanager
+  namespace: apimanager
 spec:
-  wildcardDomain: apps-crc.testing
+  wildcardDomain: dev.apps-crc.testing
   resourceRequirementsEnabled: false
   apicast:
     stagingSpec:
-      replicas: 0
+      replicas: 1
+      namespace: api-dev
+    productionSpec:
+      replicas: 1
+      namespace: api-prod

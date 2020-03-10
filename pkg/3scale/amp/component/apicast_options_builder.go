@@ -20,7 +20,9 @@ type ApicastOptions struct {
 	productionResourceRequirements *v1.ResourceRequirements
 	stagingResourceRequirements    *v1.ResourceRequirements
 	productionReplicas             *int32
+	productionNamespace            string
 	stagingReplicas                *int32
+	stagingNamespace               string
 }
 
 type ApicastOptionsBuilder struct {

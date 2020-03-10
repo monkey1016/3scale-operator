@@ -17,8 +17,8 @@ This requires an account on quay.io
 5. `oc secrets link default redhat-registry --for=pull`
 6. ```for i in `ls deploy/crds/*_crd.yaml`; do oc create -f $i ; done```
 7. `oc create -f deploy/service_account.yaml`
-8. `oc create -f deploy/role.yaml`
-9. `oc create -f deploy/role_binding.yaml`
+8. `oc create -f deploy/cluster_role.yaml`
+9. `oc create -f deploy/cluster_role_binding.yaml`
 10. `sed -i 's|REPLACE_IMAGE|quay.io/kjanania/3scale-bof-summit-2020:summit-2.7|g' deploy/operator.yaml`
 11. `oc create -f deploy/operator.yaml`
 12. `oc create -f summit/api-manager.yaml`

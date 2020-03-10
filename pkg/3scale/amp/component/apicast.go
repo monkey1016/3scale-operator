@@ -47,6 +47,7 @@ func (apicast *Apicast) StagingService() *v1.Service {
 				"threescale_component":         "apicast",
 				"threescale_component_element": "staging",
 			},
+			Namespace: apicast.Options.stagingNamespace,
 		},
 		Spec: v1.ServiceSpec{
 			Ports: []v1.ServicePort{
@@ -81,6 +82,7 @@ func (apicast *Apicast) ProductionService() *v1.Service {
 				"threescale_component":         "apicast",
 				"threescale_component_element": "production",
 			},
+			Namespace: apicast.Options.productionNamespace,
 		},
 		Spec: v1.ServiceSpec{
 			Ports: []v1.ServicePort{
@@ -112,6 +114,7 @@ func (apicast *Apicast) StagingDeploymentConfig() *appsv1.DeploymentConfig {
 				"threescale_component":         "apicast",
 				"threescale_component_element": "staging",
 			},
+			Namespace: apicast.Options.stagingNamespace,
 		},
 		Spec: appsv1.DeploymentConfigSpec{
 			Replicas: *apicast.Options.stagingReplicas,
@@ -225,6 +228,7 @@ func (apicast *Apicast) ProductionDeploymentConfig() *appsv1.DeploymentConfig {
 				"threescale_component":         "apicast",
 				"threescale_component_element": "production",
 			},
+			Namespace: apicast.Options.productionNamespace,
 		},
 		Spec: appsv1.DeploymentConfigSpec{
 			Replicas: *apicast.Options.productionReplicas,

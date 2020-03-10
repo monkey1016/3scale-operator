@@ -1,0 +1,36 @@
+apiVersion: project.openshift.io/v1
+kind: Project
+metadata:
+  name: 3scale
+spec:
+  finalizers:
+  - kubernetes
+
+---
+apiVersion: project.openshift.io/v1
+kind: Project
+metadata:
+  name: apimanager
+spec:
+  finalizers:
+  - kubernetes
+
+---
+apiVersion: project.openshift.io/v1
+kind: Project
+metadata:
+  name: api-dev
+spec:
+  finalizers:
+  - kubernetes
+
+---
+apiVersion: project.openshift.io/v1
+kind: Project
+metadata:
+  name: api-prod
+spec:
+  finalizers:
+  - kubernetes
+
+
