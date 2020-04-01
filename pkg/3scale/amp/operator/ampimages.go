@@ -12,8 +12,8 @@ func (o *OperatorAmpImagesOptionsProvider) GetAmpImagesOptions() (*component.Amp
 
 	optProv.AppLabel(*o.APIManagerSpec.AppLabel)
 	optProv.AMPRelease(product.ThreescaleRelease)
-	if o.APIManagerSpec.Apicast != nil && o.APIManagerSpec.Apicast.Image != nil {
-		optProv.ApicastImage(*o.APIManagerSpec.Apicast.Image)
+	if len(o.APIManagerSpec.Apicasts) > 0 && o.APIManagerSpec.Apicasts[0].Image != nil {
+		optProv.ApicastImage(*o.APIManagerSpec.Apicasts[0].Image)
 	} else {
 		optProv.ApicastImage(ApicastImageURL())
 	}

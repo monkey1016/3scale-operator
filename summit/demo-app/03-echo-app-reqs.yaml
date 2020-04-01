@@ -21,6 +21,7 @@ metadata:
   labels:
     api: echo-app
   name: echo-app-plan
+  namespace: 3scale
 spec:
   approvalRequired: false
   default: true

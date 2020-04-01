@@ -33,3 +33,21 @@ If you can log in, it was successful
 
 ## Cleaning Up
 ```for i in `ls -r summit/demo-app/*.yaml`; do oc delete -f $i; done```
+
+
+## Notes
+API Management as code
+artefact file <- a file that contains a policy
+
+1. Install 3scale somehow gateways in separate namespaces
+2. API defined in 3scale
+3. Build environment ready
+4. Version 1 already exists
+5. Git repo commit triggers pipeline
+6. Build and deploy to Dev gateway
+7. Update policy
+8. Run test (BDD maybe)
+9. Deploy to staging gateway
+
+Each tenant has an endpoint the gateway can use to get data
+https://github.com/3scale/APIcast/blob/master/doc/parameters.md#threescale_portal_endpoint

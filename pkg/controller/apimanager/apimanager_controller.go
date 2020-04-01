@@ -138,6 +138,8 @@ func (r *ReconcileAPIManager) Reconcile(request reconcile.Request) (reconcile.Re
 	logger := r.Logger().WithValues("namespace", request.Namespace, "name", request.Name)
 	logger.Info("ReconcileAPIManager", "Operator version", version.Version, "3scale release", product.ThreescaleRelease)
 
+	logger.Info(request.String())
+
 	instance, err := r.apiManagerInstance(request.NamespacedName)
 	if err != nil {
 		logger.Error(err, "Error fetching apimanager instance")
@@ -267,9 +269,11 @@ func (r *ReconcileAPIManager) reconcileAPIManagerLogic(cr *appsv1alpha1.APIManag
 		return result, err
 	}
 
-	result, err = r.reconcileApicast(cr)
-	if err != nil || result.Requeue {
-		return result, err
+	for _, apicast := range cr.Spec.Apicasts {
+		result, err = r.reconcileApicast(cr, apicast)
+		if err != nil || result.Requeue {
+			return result, err
+		}
 	}
 
 	return reconcile.Result{}, nil
@@ -346,9 +350,9 @@ func (r *ReconcileAPIManager) reconcileZync(cr *appsv1alpha1.APIManager) (reconc
 	return reconciler.Reconcile()
 }
 
-func (r *ReconcileAPIManager) reconcileApicast(cr *appsv1alpha1.APIManager) (reconcile.Result, error) {
+func (r *ReconcileAPIManager) reconcileApicast(cr *appsv1alpha1.APIManager, apicast *appsv1alpha1.ApicastSpec) (reconcile.Result, error) {
 	baseLogicReconciler := operator.NewBaseLogicReconciler(r.BaseReconciler)
-	reconciler := operator.NewApicastReconciler(operator.NewBaseAPIManagerLogicReconciler(baseLogicReconciler, cr))
+	reconciler := operator.NewApicastReconciler(operator.NewBaseAPIManagerLogicReconciler(baseLogicReconciler, cr), apicast)
 	return reconciler.Reconcile()
 }
 

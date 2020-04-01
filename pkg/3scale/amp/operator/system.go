@@ -17,9 +17,15 @@ func (o *OperatorSystemOptionsProvider) GetSystemOptions() (*component.SystemOpt
 
 	optProv.AppLabel(*o.APIManagerSpec.AppLabel)
 	optProv.AmpRelease(product.ThreescaleRelease)
-	optProv.ApicastRegistryURL(*o.APIManagerSpec.Apicast.RegistryURL)
+	optProv.ApicastRegistryURL(*o.APIManagerSpec.Apicasts[0].RegistryURL)
 	optProv.TenantName(*o.APIManagerSpec.TenantName)
 	optProv.WildcardDomain(o.APIManagerSpec.WildcardDomain)
+	var namespaces []*string
+	for _, apicast := range o.APIManagerSpec.Apicasts {
+		namespaces = append(namespaces, apicast.Namespace)
+	}
+	optProv.ApicastNamespaces(namespaces)
+	optProv.SystemNamespace(&o.Namespace)
 
 	if o.APIManagerSpec.System.FileStorageSpec.PVC == nil {
 		optProv.StorageClassName(nil)
@@ -236,6 +242,7 @@ func (o *OperatorSystemOptionsProvider) setFileStorageOptions(b *component.Syste
 	} else { // PVC by default
 		b.PVCFileStorageOptions(component.PVCFileStorageOptions{
 			StorageClass: o.APIManagerSpec.System.FileStorageSpec.PVC.StorageClassName,
+			AccessMode:   o.APIManagerSpec.System.FileStorageSpec.PVC.AccessMode,
 		})
 	}
 }

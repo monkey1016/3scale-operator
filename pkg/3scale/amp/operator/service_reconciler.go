@@ -28,10 +28,14 @@ func NewServiceBaseReconciler(baseAPIManagerLogicReconciler BaseAPIManagerLogicR
 
 func (r *ServiceBaseReconciler) Reconcile(desired *v1.Service) error {
 	objectInfo := ObjectInfo(desired)
+	namespace := desired.GetNamespace()
+	if namespace == "" {
+		namespace = r.apiManager.Namespace
+	}
 	existing := &v1.Service{}
 	err := r.Client().Get(
 		context.TODO(),
-		types.NamespacedName{Name: desired.Name, Namespace: r.apiManager.GetNamespace()},
+		types.NamespacedName{Name: desired.Name, Namespace: namespace},
 		existing)
 	if err != nil {
 		if errors.IsNotFound(err) {

@@ -27,11 +27,15 @@ func NewSecretBaseReconciler(baseAPIManagerLogicReconciler BaseAPIManagerLogicRe
 }
 
 func (r *SecretBaseReconciler) Reconcile(desired *v1.Secret) error {
+	namespace := r.apiManager.GetNamespace()
+	if desired.Namespace != "" {
+		namespace = desired.Namespace
+	}
 	objectInfo := ObjectInfo(desired)
 	existing := &v1.Secret{}
 	err := r.Client().Get(
 		context.TODO(),
-		types.NamespacedName{Name: desired.Name, Namespace: r.apiManager.GetNamespace()},
+		types.NamespacedName{Name: desired.Name, Namespace: namespace},
 		existing)
 	if err != nil {
 		if errors.IsNotFound(err) {

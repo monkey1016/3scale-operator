@@ -207,9 +207,24 @@ func (r *SystemReconciler) Reconcile() (reconcile.Result, error) {
 		return reconcile.Result{}, err
 	}
 
-	err = r.reconcileMasterApicastSecret(system.MasterApicastSecret())
+	secret, err := system.MasterApicastSecret(&r.apiManager.Namespace, nil)
 	if err != nil {
 		return reconcile.Result{}, err
+	}
+	err = r.reconcileMasterApicastSecret(secret)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	for _, apicast := range r.apiManager.Spec.Apicasts {
+		secret, err := system.MasterApicastSecret(&r.apiManager.Namespace, apicast.Namespace)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+		err = r.reconcileAlternateApicastSecret(secret)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
 	}
 
 	err = r.reconcileSeedSecret(system.SeedSecret())
@@ -328,6 +343,11 @@ func (r *SystemReconciler) reconcileRedisSecret(desiredSecret *v1.Secret) error 
 }
 
 func (r *SystemReconciler) reconcileMasterApicastSecret(desiredSecret *v1.Secret) error {
+	reconciler := NewSecretBaseReconciler(r.BaseAPIManagerLogicReconciler, NewDefaultsOnlySecretReconciler())
+	return reconciler.Reconcile(desiredSecret)
+}
+
+func (r *SystemReconciler) reconcileAlternateApicastSecret(desiredSecret *v1.Secret) error {
 	reconciler := NewSecretBaseReconciler(r.BaseAPIManagerLogicReconciler, NewDefaultsOnlySecretReconciler())
 	return reconciler.Reconcile(desiredSecret)
 }

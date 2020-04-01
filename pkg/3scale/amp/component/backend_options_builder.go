@@ -30,6 +30,9 @@ type BackendOptions struct {
 	systemBackendPassword string
 	tenantName            string
 	wildcardDomain        string
+
+	apicastNamespaces []*string
+	backendNamespace  *string
 }
 
 type BackendOptionsBuilder struct {
@@ -110,6 +113,14 @@ func (m *BackendOptionsBuilder) WorkerReplicas(replicas int32) {
 
 func (m *BackendOptionsBuilder) CronReplicas(replicas int32) {
 	m.options.cronReplicas = &replicas
+}
+
+func (s *BackendOptionsBuilder) ApicastNamespaces(namespaces []*string) {
+	s.options.apicastNamespaces = namespaces
+}
+
+func (s *BackendOptionsBuilder) BackendNamespace(namespace *string) {
+	s.options.backendNamespace = namespace
 }
 
 func (m *BackendOptionsBuilder) Build() (*BackendOptions, error) {

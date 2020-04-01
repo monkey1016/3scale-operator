@@ -29,10 +29,14 @@ func NewImageStreamBaseReconciler(baseAPIManagerLogicReconciler BaseAPIManagerLo
 
 func (r *ImageStreamBaseReconciler) Reconcile(desired *imagev1.ImageStream) error {
 	objectInfo := ObjectInfo(desired)
+	namespace := desired.GetNamespace()
+	if namespace == "" {
+		namespace = r.apiManager.Namespace
+	}
 	existing := &imagev1.ImageStream{}
 	err := r.Client().Get(
 		context.TODO(),
-		types.NamespacedName{Name: desired.Name, Namespace: r.apiManager.GetNamespace()},
+		types.NamespacedName{Name: desired.Name, Namespace: namespace},
 		existing)
 	if err != nil {
 		if errors.IsNotFound(err) {

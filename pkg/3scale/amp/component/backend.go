@@ -1,6 +1,8 @@
 package component
 
 import (
+	"net/url"
+
 	"github.com/3scale/3scale-operator/pkg/common"
 
 	appsv1 "github.com/openshift/api/apps/v1"
@@ -8,6 +10,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 const (
@@ -32,6 +35,8 @@ const (
 	BackendSecretBackendListenerRouteEndpointFieldName   = "route_endpoint"
 )
 
+var log = logf.Log.WithName("component/backend")
+
 type Backend struct {
 	Options *BackendOptions
 }
@@ -50,7 +55,18 @@ func (backend *Backend) Objects() []common.KubernetesObject {
 
 	internalAPISecretForSystem := backend.InternalAPISecretForSystem()
 	redisSecret := backend.RedisSecret()
-	listenerSecret := backend.ListenerSecret()
+	listenerSecret, err := backend.ListenerSecret(backend.Options.backendNamespace, nil)
+	if err != nil {
+		log.Error(err, "Error while parsing backend service URL")
+	}
+	var apicastNamespaces []common.KubernetesObject
+	for _, apicastNamespace := range backend.Options.apicastNamespaces {
+		listenerSecret, err := backend.ListenerSecret(backend.Options.backendNamespace, apicastNamespace)
+		apicastNamespaces = append(apicastNamespaces, listenerSecret)
+		if err != nil {
+			log.Error(err, "Error while parsing backend service URL")
+		}
+	}
 
 	objects := []common.KubernetesObject{
 		cronDeploymentConfig,
@@ -63,6 +79,7 @@ func (backend *Backend) Objects() []common.KubernetesObject {
 		redisSecret,
 		listenerSecret,
 	}
+	objects = append(objects, apicastNamespaces...)
 	return objects
 }
 
@@ -459,8 +476,9 @@ func (backend *Backend) InternalAPISecretForSystem() *v1.Secret {
 	}
 }
 
-func (backend *Backend) ListenerSecret() *v1.Secret {
-	return &v1.Secret{
+func (backend *Backend) ListenerSecret(backendNamespace *string, apicastNamespace *string) (*v1.Secret, error) {
+	var err error
+	secret := v1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
 			Kind:       "Secret",
@@ -478,4 +496,14 @@ func (backend *Backend) ListenerSecret() *v1.Secret {
 		},
 		Type: v1.SecretTypeOpaque,
 	}
+	if apicastNamespace != nil && backendNamespace != nil {
+		secret.Namespace = *apicastNamespace
+		parsedURL, err := url.Parse(secret.StringData[BackendSecretBackendListenerServiceEndpointFieldName])
+		if err != nil {
+			return nil, err
+		}
+		rebuiltURL := parsedURL.Scheme + "://" + parsedURL.Hostname() + "." + *backendNamespace + ".svc.cluster.local:" + parsedURL.Port()
+		secret.StringData[BackendSecretBackendListenerServiceEndpointFieldName] = rebuiltURL
+	}
+	return &secret, err
 }

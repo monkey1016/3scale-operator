@@ -2,6 +2,7 @@ package operator
 
 import (
 	"github.com/3scale/3scale-operator/pkg/3scale/amp/component"
+	appsv1alpha1 "github.com/3scale/3scale-operator/pkg/apis/apps/v1alpha1"
 	appsv1 "github.com/openshift/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -56,14 +57,16 @@ func (r *ApicastStagingDCReconciler) IsUpdateNeeded(desired, existing *appsv1.De
 
 type ApicastReconciler struct {
 	BaseAPIManagerLogicReconciler
+	apicastSpec *appsv1alpha1.ApicastSpec
 }
 
 // blank assignment to verify that BaseReconciler implements reconcile.Reconciler
 var _ LogicReconciler = &ApicastReconciler{}
 
-func NewApicastReconciler(baseAPIManagerLogicReconciler BaseAPIManagerLogicReconciler) ApicastReconciler {
+func NewApicastReconciler(baseAPIManagerLogicReconciler BaseAPIManagerLogicReconciler, apicast *appsv1alpha1.ApicastSpec) ApicastReconciler {
 	return ApicastReconciler{
 		BaseAPIManagerLogicReconciler: baseAPIManagerLogicReconciler,
+		apicastSpec:                   apicast,
 	}
 }
 
@@ -73,25 +76,35 @@ func (r *ApicastReconciler) Reconcile() (reconcile.Result, error) {
 		return reconcile.Result{}, err
 	}
 
-	err = r.reconcileStagingDeploymentConfig(apicast.StagingDeploymentConfig())
+	err = r.reconcileDeploymentConfig(apicast.DeploymentConfig(&r.apiManager.Namespace))
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
-	err = r.reconcileProductionDeploymentConfig(apicast.ProductionDeploymentConfig())
+	err = r.reconcileService(apicast.Service())
 	if err != nil {
 		return reconcile.Result{}, err
 	}
+	// for _, apicast := r.apicast().
+	// err = r.reconcileStagingDeploymentConfig(apicast.StagingDeploymentConfig())
+	// if err != nil {
+	// 	return reconcile.Result{}, err
+	// }
 
-	err = r.reconcileStagingService(apicast.StagingService())
-	if err != nil {
-		return reconcile.Result{}, err
-	}
+	// err = r.reconcileProductionDeploymentConfig(apicast.ProductionDeploymentConfig())
+	// if err != nil {
+	// 	return reconcile.Result{}, err
+	// }
 
-	err = r.reconcileProductionService(apicast.ProductionService())
-	if err != nil {
-		return reconcile.Result{}, err
-	}
+	// err = r.reconcileStagingService(apicast.StagingService())
+	// if err != nil {
+	// 	return reconcile.Result{}, err
+	// }
+
+	// err = r.reconcileProductionService(apicast.ProductionService())
+	// if err != nil {
+	// 	return reconcile.Result{}, err
+	// }
 
 	err = r.reconcileEnvironmentConfigMap(apicast.EnvironmentConfigMap())
 	if err != nil {
@@ -102,7 +115,7 @@ func (r *ApicastReconciler) Reconcile() (reconcile.Result, error) {
 }
 
 func (r *ApicastReconciler) apicast() (*component.Apicast, error) {
-	optsProvider := OperatorApicastOptionsProvider{APIManagerSpec: &r.apiManager.Spec, Namespace: r.apiManager.Namespace, Client: r.Client()}
+	optsProvider := OperatorApicastOptionsProvider{APIManagerSpec: &r.apiManager.Spec, Namespace: r.apiManager.Namespace, Client: r.Client(), ApicastSpec: r.apicastSpec}
 	opts, err := optsProvider.GetApicastOptions()
 	if err != nil {
 		return nil, err
@@ -110,22 +123,32 @@ func (r *ApicastReconciler) apicast() (*component.Apicast, error) {
 	return component.NewApicast(opts), nil
 }
 
-func (r *ApicastReconciler) reconcileStagingDeploymentConfig(desiredDeploymentConfig *appsv1.DeploymentConfig) error {
+// func (r *ApicastReconciler) reconcileStagingDeploymentConfig(desiredDeploymentConfig *appsv1.DeploymentConfig) error {
+// 	reconciler := NewDeploymentConfigBaseReconciler(r.BaseAPIManagerLogicReconciler, NewApicastDCReconciler(r.BaseAPIManagerLogicReconciler))
+// 	return reconciler.Reconcile(desiredDeploymentConfig)
+// }
+
+func (r *ApicastReconciler) reconcileDeploymentConfig(desiredDeploymentConfig *appsv1.DeploymentConfig) error {
 	reconciler := NewDeploymentConfigBaseReconciler(r.BaseAPIManagerLogicReconciler, NewApicastDCReconciler(r.BaseAPIManagerLogicReconciler))
 	return reconciler.Reconcile(desiredDeploymentConfig)
 }
 
-func (r *ApicastReconciler) reconcileProductionDeploymentConfig(desiredDeploymentConfig *appsv1.DeploymentConfig) error {
-	reconciler := NewDeploymentConfigBaseReconciler(r.BaseAPIManagerLogicReconciler, NewApicastDCReconciler(r.BaseAPIManagerLogicReconciler))
-	return reconciler.Reconcile(desiredDeploymentConfig)
-}
+// func (r *ApicastReconciler) reconcileProductionDeploymentConfig(desiredDeploymentConfig *appsv1.DeploymentConfig) error {
+// 	reconciler := NewDeploymentConfigBaseReconciler(r.BaseAPIManagerLogicReconciler, NewApicastDCReconciler(r.BaseAPIManagerLogicReconciler))
+// 	return reconciler.Reconcile(desiredDeploymentConfig)
+// }
 
-func (r *ApicastReconciler) reconcileStagingService(desiredService *v1.Service) error {
-	reconciler := NewServiceBaseReconciler(r.BaseAPIManagerLogicReconciler, NewCreateOnlySvcReconciler())
-	return reconciler.Reconcile(desiredService)
-}
+// func (r *ApicastReconciler) reconcileStagingService(desiredService *v1.Service) error {
+// 	reconciler := NewServiceBaseReconciler(r.BaseAPIManagerLogicReconciler, NewCreateOnlySvcReconciler())
+// 	return reconciler.Reconcile(desiredService)
+// }
 
-func (r *ApicastReconciler) reconcileProductionService(desiredService *v1.Service) error {
+// func (r *ApicastReconciler) reconcileProductionService(desiredService *v1.Service) error {
+// 	reconciler := NewServiceBaseReconciler(r.BaseAPIManagerLogicReconciler, NewCreateOnlySvcReconciler())
+// 	return reconciler.Reconcile(desiredService)
+// }
+
+func (r *ApicastReconciler) reconcileService(desiredService *v1.Service) error {
 	reconciler := NewServiceBaseReconciler(r.BaseAPIManagerLogicReconciler, NewCreateOnlySvcReconciler())
 	return reconciler.Reconcile(desiredService)
 }

@@ -17,6 +17,7 @@ type S3FileStorageOptions struct {
 
 type PVCFileStorageOptions struct {
 	StorageClass *string
+	AccessMode   *string
 }
 
 type SystemOptions struct {
@@ -66,6 +67,9 @@ type SystemOptions struct {
 	tenantName          string
 	wildcardDomain      string
 	storageClassName    *string // should this be a string or *string? check what would be the difference between passing a "" and a nil pointer in the PersistentVolumeClaim corresponding field
+
+	apicastNamespaces []*string
+	systemNamespace   *string
 }
 
 type SystemOptionsBuilder struct {
@@ -230,6 +234,14 @@ func (s *SystemOptionsBuilder) AppReplicas(replicas int32) {
 
 func (s *SystemOptionsBuilder) SidekiqReplicas(replicas int32) {
 	s.options.sidekiqReplicas = &replicas
+}
+
+func (s *SystemOptionsBuilder) ApicastNamespaces(namespaces []*string) {
+	s.options.apicastNamespaces = namespaces
+}
+
+func (s *SystemOptionsBuilder) SystemNamespace(namespace *string) {
+	s.options.systemNamespace = namespace
 }
 
 func (s *SystemOptionsBuilder) Build() (*SystemOptions, error) {

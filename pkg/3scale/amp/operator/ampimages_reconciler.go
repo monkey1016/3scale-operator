@@ -37,10 +37,31 @@ func (r *AMPImagesReconciler) Reconcile() (reconcile.Result, error) {
 		return reconcile.Result{}, err
 	}
 
-	err = r.reconcileApicastImageStream(ampImages.APICastImageStream())
-	if err != nil {
-		return reconcile.Result{}, err
+	// Eventually convert to have an arbitrary number of gateways
+	for _, apicast := range r.apiManager.Spec.Apicasts {
+		namespace := ""
+		if apicast.Namespace != nil {
+			namespace = *apicast.Namespace
+		}
+		err = r.reconcileApicastImageStream(ampImages.APICastImageStream(namespace))
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+
+		err = r.reconcileDeploymentsServiceAccount(ampImages.DeploymentsServiceAccount(namespace))
+		if err != nil {
+			return reconcile.Result{}, err
+		}
 	}
+
+	// err = r.reconcileDeploymentsServiceAccount(ampImages.DeploymentsServiceAccount(r.apiManager.Spec.Apicast.ProductionSpec.Namespace))
+	// if err != nil {
+	// 	return reconcile.Result{}, err
+	// }
+	// err = r.reconcileDeploymentsServiceAccount(ampImages.DeploymentsServiceAccount(r.apiManager.Spec.Apicast.StagingSpec.Namespace))
+	// if err != nil {
+	// 	return reconcile.Result{}, err
+	// }
 
 	err = r.reconcileSystemImageStream(ampImages.SystemImageStream())
 	if err != nil {
@@ -57,7 +78,7 @@ func (r *AMPImagesReconciler) Reconcile() (reconcile.Result, error) {
 		return reconcile.Result{}, err
 	}
 
-	err = r.reconcileDeploymentsServiceAccount(ampImages.DeploymentsServiceAccount())
+	err = r.reconcileDeploymentsServiceAccount(ampImages.DeploymentsServiceAccount(r.apiManager.GetNamespace()))
 	if err != nil {
 		return reconcile.Result{}, err
 	}

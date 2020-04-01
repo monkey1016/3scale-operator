@@ -4,9 +4,12 @@ apiVersion: capabilities.3scale.net/v1alpha1
 kind: Binding
 metadata:
   name: echo-app-binding
+  namespace: 3scale
 spec:
   credentialsRef:
     name: red-hat-summit-tenant-secret
+    namespace: 3scale
   APISelector:
     matchLabels:
       environment: production
+      api: echo-app

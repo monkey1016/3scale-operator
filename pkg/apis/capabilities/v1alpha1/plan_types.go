@@ -5,6 +5,7 @@ import (
 	"fmt"
 	portaClient "github.com/3scale/3scale-porta-go-client/client"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"log"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -35,8 +36,8 @@ type PlanSelectors struct {
 }
 
 type PlanCost struct {
-	SetupFee  float64 `json:"setupFee,omitempty"`
-	CostMonth float64 `json:"costMonth,omitempty"`
+	SetupFee  resource.Quantity `json:"setupFee,omitempty"`
+	CostMonth resource.Quantity `json:"costMonth,omitempty"`
 }
 
 // PlanStatus defines the observed state of Plan
@@ -122,8 +123,8 @@ func (d *plansDiff) reconcileWith3scale(c *portaClient.ThreeScaleClient, service
 		}
 		params := portaClient.Params{
 			"approval_required": strconv.FormatBool(plan.ApprovalRequired),
-			"setup_fee":         strconv.FormatFloat(plan.Costs.SetupFee, 'f', 1, 64),
-			"cost_per_month":    strconv.FormatFloat(plan.Costs.CostMonth, 'f', 1, 64),
+			"setup_fee":         plan.Costs.SetupFee.String(),
+			"cost_per_month":    plan.Costs.CostMonth.String(),
 			"trial_period_days": strconv.FormatInt(plan.TrialPeriodDays, 10),
 		}
 		_, err = c.UpdateAppPlan(serviceId, plan3scale.ID, plan3scale.PlanName, "", params)
@@ -141,8 +142,8 @@ func (d *plansDiff) reconcileWith3scale(c *portaClient.ThreeScaleClient, service
 		}
 		params := portaClient.Params{
 			"approval_required": strconv.FormatBool(planPair.A.ApprovalRequired),
-			"setup_fee":         strconv.FormatFloat(planPair.A.Costs.SetupFee, 'f', 1, 64),
-			"cost_per_month":    strconv.FormatFloat(planPair.A.Costs.CostMonth, 'f', 1, 64),
+			"setup_fee":         planPair.A.Costs.SetupFee.String(),
+			"cost_per_month":    planPair.A.Costs.CostMonth.String(),
 			"trial_period_days": strconv.FormatInt(planPair.A.TrialPeriodDays, 10),
 		}
 		stateEvent := ""

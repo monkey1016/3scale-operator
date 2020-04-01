@@ -2,6 +2,7 @@ package component
 
 import (
 	"fmt"
+	"net/url"
 	"sort"
 
 	"github.com/3scale/3scale-operator/pkg/common"
@@ -107,7 +108,18 @@ func (system *System) Objects() []common.KubernetesObject {
 	eventsHookSecret := system.EventsHookSecret()
 
 	redisSecret := system.RedisSecret()
-	masterApicastSecret := system.MasterApicastSecret()
+	masterApicastSecret, err := system.MasterApicastSecret(system.Options.systemNamespace, nil)
+	if err != nil {
+		log.Error(err, "Error while parsing system service URL")
+	}
+	var apicastNamespaces []common.KubernetesObject
+	for _, apicastNamespace := range system.Options.apicastNamespaces {
+		listenerSecret, err := system.MasterApicastSecret(system.Options.systemNamespace, apicastNamespace)
+		apicastNamespaces = append(apicastNamespaces, listenerSecret)
+		if err != nil {
+			log.Error(err, "Error while parsing backend service URL")
+		}
+	}
 
 	seedSecret := system.SeedSecret()
 	recaptchaSecret := system.RecaptchaSecret()
@@ -135,6 +147,7 @@ func (system *System) Objects() []common.KubernetesObject {
 		appSecret,
 		memcachedSecret,
 	}
+	objects = append(objects, apicastNamespaces...)
 	return objects
 }
 
@@ -470,8 +483,31 @@ func (system *System) SeedSecret() *v1.Secret {
 	}
 }
 
-func (system *System) MasterApicastSecret() *v1.Secret {
-	return &v1.Secret{
+// func (system *System) MasterApicastSecret() *v1.Secret {
+// 	return &v1.Secret{
+// 		TypeMeta: metav1.TypeMeta{
+// 			APIVersion: "v1",
+// 			Kind:       "Secret",
+// 		},
+// 		ObjectMeta: metav1.ObjectMeta{
+// 			Name: SystemSecretSystemMasterApicastSecretName,
+// 			Labels: map[string]string{
+// 				"app":                  system.Options.appLabel,
+// 				"threescale_component": "system",
+// 			},
+// 		},
+// 		StringData: map[string]string{
+// 			SystemSecretSystemMasterApicastProxyConfigsEndpointFieldName: *system.Options.apicastSystemMasterProxyConfigEndpoint,
+// 			SystemSecretSystemMasterApicastBaseURL:                       *system.Options.apicastSystemMasterBaseURL,
+// 			SystemSecretSystemMasterApicastAccessToken:                   system.Options.apicastAccessToken,
+// 		},
+// 		Type: v1.SecretTypeOpaque,
+// 	}
+// }
+
+func (system *System) MasterApicastSecret(systemNamespace *string, apicastNamespace *string) (*v1.Secret, error) {
+	var err error
+	secret := v1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
 			Kind:       "Secret",
@@ -490,6 +526,24 @@ func (system *System) MasterApicastSecret() *v1.Secret {
 		},
 		Type: v1.SecretTypeOpaque,
 	}
+	if apicastNamespace != nil && systemNamespace != nil {
+		secret.Namespace = *apicastNamespace
+		parsedURL, err := url.Parse(secret.StringData[SystemSecretSystemMasterApicastBaseURL])
+		if err != nil {
+			return nil, err
+		}
+		rebuiltURL := parsedURL.Scheme + "://" + parsedURL.User.String() + "@" + parsedURL.Hostname() + "." + *systemNamespace + ".svc.cluster.local:" + parsedURL.Port()
+		secret.StringData[SystemSecretSystemMasterApicastBaseURL] = rebuiltURL
+
+		parsedURL, err = url.Parse(secret.StringData[SystemSecretSystemMasterApicastProxyConfigsEndpointFieldName])
+		if err != nil {
+			return nil, err
+		}
+		rebuiltURL = parsedURL.Scheme + "://" + parsedURL.User.String() + "@" + parsedURL.Hostname() + "." + *systemNamespace + ".svc.cluster.local:" + parsedURL.Port() + parsedURL.Path
+		secret.StringData[SystemSecretSystemMasterApicastProxyConfigsEndpointFieldName] = rebuiltURL
+
+	}
+	return &secret, err
 }
 
 func (system *System) appPodVolumes() []v1.Volume {
@@ -933,6 +987,10 @@ func (system *System) sidekiqContainerVolumeMounts() []v1.VolumeMount {
 }
 
 func (system *System) SharedStorage() *v1.PersistentVolumeClaim {
+	accessMode := v1.ReadWriteMany
+	if system.Options.pvcFileStorageOptions.AccessMode != nil {
+		accessMode = v1.PersistentVolumeAccessMode(*system.Options.pvcFileStorageOptions.AccessMode)
+	}
 	res := &v1.PersistentVolumeClaim{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
@@ -949,7 +1007,7 @@ func (system *System) SharedStorage() *v1.PersistentVolumeClaim {
 		Spec: v1.PersistentVolumeClaimSpec{
 			StorageClassName: system.Options.storageClassName,
 			AccessModes: []v1.PersistentVolumeAccessMode{
-				v1.ReadWriteMany,
+				accessMode,
 			},
 			Resources: v1.ResourceRequirements{
 				Requests: v1.ResourceList{

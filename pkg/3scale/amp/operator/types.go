@@ -63,6 +63,7 @@ type OperatorZyncOptionsProvider struct {
 
 type OperatorApicastOptionsProvider struct {
 	APIManagerSpec *appsv1alpha1.APIManagerSpec
+	ApicastSpec    *appsv1alpha1.ApicastSpec
 	Namespace      string
 	Client         k8sclient.Client
 }

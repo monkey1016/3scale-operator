@@ -32,10 +32,14 @@ func NewDeploymentConfigBaseReconciler(baseAPIManagerLogicReconciler BaseAPIMana
 
 func (r *DeploymentConfigBaseReconciler) Reconcile(desired *appsv1.DeploymentConfig) error {
 	objectInfo := ObjectInfo(desired)
+	namespace := desired.GetNamespace()
+	if namespace == "" {
+		namespace = r.apiManager.GetNamespace()
+	}
 	existing := &appsv1.DeploymentConfig{}
 	err := r.Client().Get(
 		context.TODO(),
-		types.NamespacedName{Name: desired.Name, Namespace: r.apiManager.GetNamespace()},
+		types.NamespacedName{Name: desired.Name, Namespace: namespace},
 		existing)
 	if err != nil {
 		if errors.IsNotFound(err) {

@@ -25,7 +25,7 @@ const (
 type APIManagerSpec struct {
 	APIManagerCommonSpec `json:",inline"`
 	// +optional
-	Apicast *ApicastSpec `json:"apicast,omitempty"`
+	Apicasts []*ApicastSpec `json:"apicasts,omitempty"`
 	// +optional
 	Backend *BackendSpec `json:"backend,omitempty"`
 	// +optional
@@ -119,20 +119,24 @@ type ApicastSpec struct {
 	// +optional
 	Image *string `json:"image,omitempty"`
 	// +optional
-	ProductionSpec *ApicastProductionSpec `json:"productionSpec,omitempty"`
-	// +optional
-	StagingSpec *ApicastStagingSpec `json:"stagingSpec,omitempty"`
+	Environment *string `json:"environment,omitempty"`
+	Replicas    *int64  `json:"replicas,omitempty"`
+	Namespace   *string `json:"namespace,omitempty"`
 }
 
-type ApicastProductionSpec struct {
-	// +optional
-	Replicas *int64 `json:"replicas,omitempty"`
-}
+// type ApicastProductionSpec struct {
+// 	// +optional
+// 	Replicas *int64 `json:"replicas,omitempty"`
+// 	// +optional
+// 	Namespace string `json:"namespace,omitempty"`
+// }
 
-type ApicastStagingSpec struct {
-	// +optional
-	Replicas *int64 `json:"replicas,omitempty"`
-}
+// type ApicastStagingSpec struct {
+// 	// +optional
+// 	Replicas *int64 `json:"replicas,omitempty"`
+// 	// +optional
+// 	Namespace string `json:"namespace,omitempty"`
+// }
 
 type BackendSpec struct {
 	// +optional
@@ -212,6 +216,8 @@ type SystemFileStorageSpec struct {
 type SystemPVCSpec struct {
 	// +optional
 	StorageClassName *string `json:"storageClassName,omitempty"`
+	// +optional
+	AccessMode *string `json:"accessMode,omitempty"`
 }
 
 type SystemS3Spec struct {
@@ -327,46 +333,50 @@ func (apimanager *APIManager) setApicastSpecDefaults() bool {
 	defaultApicastOpenSSLVerify := false
 	defaultApicastResponseCodes := true
 	defaultApicastRegistryURL := "http://apicast-staging:8090/policies"
-	if spec.Apicast == nil {
-		spec.Apicast = &ApicastSpec{}
+	defaultProductionEnvironment := "production"
+	defaultStagingEnvironment := "staging"
+	if len(spec.Apicasts) == 0 {
+		defaultStagingApicast := &ApicastSpec{}
+		defaultProductionApicast := &ApicastSpec{}
+		spec.Apicasts = []*ApicastSpec{defaultStagingApicast, defaultProductionApicast}
 		changed = true
-	}
 
-	if spec.Apicast.ApicastManagementAPI == nil {
-		spec.Apicast.ApicastManagementAPI = &defaultApicastManagementAPI
-		changed = true
-	}
-	if spec.Apicast.OpenSSLVerify == nil {
-		spec.Apicast.OpenSSLVerify = &defaultApicastOpenSSLVerify
-		changed = true
-	}
-	if spec.Apicast.IncludeResponseCodes == nil {
-		spec.Apicast.IncludeResponseCodes = &defaultApicastResponseCodes
-		changed = true
-	}
-	if spec.Apicast.RegistryURL == nil {
-		spec.Apicast.RegistryURL = &defaultApicastRegistryURL
-		changed = true
-	}
+		defaultStagingApicast.ApicastManagementAPI = &defaultApicastManagementAPI
+		defaultProductionApicast.ApicastManagementAPI = &defaultApicastManagementAPI
 
-	if spec.Apicast.StagingSpec == nil {
-		spec.Apicast.StagingSpec = &ApicastStagingSpec{}
-		changed = true
-	}
+		defaultStagingApicast.OpenSSLVerify = &defaultApicastOpenSSLVerify
+		defaultProductionApicast.OpenSSLVerify = &defaultApicastOpenSSLVerify
 
-	if spec.Apicast.ProductionSpec == nil {
-		spec.Apicast.ProductionSpec = &ApicastProductionSpec{}
-		changed = true
-	}
+		defaultStagingApicast.IncludeResponseCodes = &defaultApicastResponseCodes
+		defaultProductionApicast.IncludeResponseCodes = &defaultApicastResponseCodes
 
-	if spec.Apicast.StagingSpec.Replicas == nil {
-		spec.Apicast.StagingSpec.Replicas = apimanager.defaultReplicas()
-		changed = true
-	}
+		defaultStagingApicast.RegistryURL = &defaultApicastRegistryURL
+		defaultProductionApicast.RegistryURL = &defaultApicastRegistryURL
 
-	if spec.Apicast.ProductionSpec.Replicas == nil {
-		spec.Apicast.ProductionSpec.Replicas = apimanager.defaultReplicas()
-		changed = true
+		defaultStagingApicast.Replicas = apimanager.defaultReplicas()
+		defaultProductionApicast.Replicas = apimanager.defaultReplicas()
+
+		defaultStagingApicast.Environment = &defaultStagingEnvironment
+		defaultProductionApicast.Environment = &defaultProductionEnvironment
+	} else {
+		for _, apicast := range spec.Apicasts {
+			if apicast.RegistryURL == nil {
+				apicast.RegistryURL = &defaultApicastRegistryURL
+				changed = true
+			}
+			if apicast.OpenSSLVerify == nil {
+				apicast.OpenSSLVerify = &defaultApicastOpenSSLVerify
+				changed = true
+			}
+			if apicast.IncludeResponseCodes == nil {
+				apicast.IncludeResponseCodes = &defaultApicastResponseCodes
+				changed = true
+			}
+			if apicast.ApicastManagementAPI == nil {
+				apicast.ApicastManagementAPI = &defaultApicastManagementAPI
+				changed = true
+			}
+		}
 	}
 
 	return changed
@@ -375,6 +385,11 @@ func (apimanager *APIManager) setApicastSpecDefaults() bool {
 func (apimanager *APIManager) defaultReplicas() *int64 {
 	var defaultReplicas int64 = 1
 	return &defaultReplicas
+}
+
+func (apimanager *APIManager) defaultNamespace() *string {
+	var defaultNamespace string = ""
+	return &defaultNamespace
 }
 
 func (apimanager *APIManager) setBackendSpecDefaults() bool {

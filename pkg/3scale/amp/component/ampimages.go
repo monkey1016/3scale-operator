@@ -23,12 +23,12 @@ func NewAmpImages(options *AmpImagesOptions) *AmpImages {
 func (ampImages *AmpImages) Objects() []common.KubernetesObject {
 	backendImageStream := ampImages.BackendImageStream()
 	zyncImageStream := ampImages.ZyncImageStream()
-	apicastImageStream := ampImages.APICastImageStream()
+	apicastImageStream := ampImages.APICastImageStream("")
 	systemImageStream := ampImages.SystemImageStream()
 	zyncDatabasePostgreSQLImageStream := ampImages.ZyncDatabasePostgreSQLImageStream()
 	systemMemcachedImageStream := ampImages.SystemMemcachedImageStream()
 
-	deploymentsServiceAccount := ampImages.DeploymentsServiceAccount()
+	deploymentsServiceAccount := ampImages.DeploymentsServiceAccount("")
 
 	objects := []common.KubernetesObject{
 		backendImageStream,
@@ -128,7 +128,7 @@ func (ampImages *AmpImages) ZyncImageStream() *imagev1.ImageStream {
 	}
 }
 
-func (ampImages *AmpImages) APICastImageStream() *imagev1.ImageStream {
+func (ampImages *AmpImages) APICastImageStream(namespace string) *imagev1.ImageStream {
 	return &imagev1.ImageStream{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "amp-apicast",
@@ -139,6 +139,7 @@ func (ampImages *AmpImages) APICastImageStream() *imagev1.ImageStream {
 			Annotations: map[string]string{
 				"openshift.io/display-name": "AMP APIcast",
 			},
+			Namespace: namespace,
 		},
 		TypeMeta: metav1.TypeMeta{APIVersion: "image.openshift.io/v1", Kind: "ImageStream"},
 		Spec: imagev1.ImageStreamSpec{
@@ -300,14 +301,29 @@ func (ampImages *AmpImages) SystemMemcachedImageStream() *imagev1.ImageStream {
 	}
 }
 
-func (ampImages *AmpImages) DeploymentsServiceAccount() *v1.ServiceAccount {
+// func (ampImages *AmpImages) DeploymentsServiceAccount() *v1.ServiceAccount {
+// 	return &v1.ServiceAccount{
+// 		TypeMeta: metav1.TypeMeta{
+// 			Kind:       "ServiceAccount",
+// 			APIVersion: "v1",
+// 		},
+// 		ObjectMeta: metav1.ObjectMeta{
+// 			Name: "amp",
+// 		},
+// 		ImagePullSecrets: []v1.LocalObjectReference{
+// 			v1.LocalObjectReference{
+// 				Name: "threescale-registry-auth"}}}
+// }
+
+func (ampImages *AmpImages) DeploymentsServiceAccount(namespace string) *v1.ServiceAccount {
 	return &v1.ServiceAccount{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ServiceAccount",
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "amp",
+			Name:      "amp",
+			Namespace: namespace,
 		},
 		ImagePullSecrets: []v1.LocalObjectReference{
 			v1.LocalObjectReference{

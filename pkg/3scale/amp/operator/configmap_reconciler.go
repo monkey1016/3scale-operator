@@ -27,11 +27,15 @@ func NewConfigMapBaseReconciler(baseAPIManagerLogicReconciler BaseAPIManagerLogi
 }
 
 func (r *ConfigMapBaseReconciler) Reconcile(desired *v1.ConfigMap) error {
+	namespace := r.apiManager.GetNamespace()
+	if desired.Namespace != "" {
+		namespace = desired.Namespace
+	}
 	objectInfo := ObjectInfo(desired)
 	existing := &v1.ConfigMap{}
 	err := r.Client().Get(
 		context.TODO(),
-		types.NamespacedName{Name: desired.Name, Namespace: r.apiManager.GetNamespace()},
+		types.NamespacedName{Name: desired.Name, Namespace: namespace},
 		existing)
 	if err != nil {
 		if errors.IsNotFound(err) {

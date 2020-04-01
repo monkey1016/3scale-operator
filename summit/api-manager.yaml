@@ -1,15 +1,19 @@
 apiVersion: apps.3scale.net/v1alpha1
 kind: APIManager
 metadata:
-  name: default-apimanager
+  name: testing-apimanager
   namespace: apimanager
 spec:
-  wildcardDomain: dev.apps-crc.testing
+  wildcardDomain: apps.apicast.pocs.down-time.io
   resourceRequirementsEnabled: false
-  apicast:
-    stagingSpec:
+  apicasts:
+    - environment: development
       replicas: 1
       namespace: api-dev
-    productionSpec:
+    - environment: production
       replicas: 1
       namespace: api-prod
+  system:
+    fileStorage:
+      persistentVolumeClaim:
+        accessMode: ReadWriteOnce

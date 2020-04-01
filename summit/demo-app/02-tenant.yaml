@@ -2,13 +2,15 @@ apiVersion: capabilities.3scale.net/v1alpha1
 kind: Tenant
 metadata:
   name: redhat-summit-tenant
+  namespace: 3scale
 spec:
   username: admin
-  systemMasterUrl: https://master.apps-crc.testing
+  systemMasterUrl: https://master.apps.cluster-nyc-0156.nyc-0156.example.opentlc.com
   email: kjanania@redhat.com
   organizationName: Red Hat
   masterCredentialsRef:
     name: system-seed
+    namespace: 3scale
   passwordCredentialsRef:
     name: red-hat-summit-admin-secret
     namespace: 3scale

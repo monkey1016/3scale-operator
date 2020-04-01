@@ -65,7 +65,10 @@ func (r BaseAPIManagerLogicReconciler) ensureOwnerReference(obj common.Kubernete
 }
 
 func (r *BaseAPIManagerLogicReconciler) createResource(obj common.KubernetesObject) error {
-	obj.SetNamespace(r.apiManager.GetNamespace())
+	r.Logger().Info(fmt.Sprintf("Object has namespace %s", obj.GetNamespace()))
+	if obj.GetNamespace() == "" {
+		obj.SetNamespace(r.apiManager.GetNamespace())
+	}
 	if err := r.setOwnerReference(obj); err != nil {
 		return err
 	}

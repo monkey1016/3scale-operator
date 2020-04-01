@@ -24,6 +24,8 @@ func (o *OperatorBackendOptionsProvider) GetBackendOptions() (*component.Backend
 	o.setResourceRequirementsOptions(&optProv)
 	o.setReplicas(&optProv)
 
+	optProv.BackendNamespace(&o.Namespace)
+
 	res, err := optProv.Build()
 	if err != nil {
 		return nil, fmt.Errorf("unable to create Backend Options - %s", err)

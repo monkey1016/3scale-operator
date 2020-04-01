@@ -133,9 +133,24 @@ func (r *BackendReconciler) Reconcile() (reconcile.Result, error) {
 		return reconcile.Result{}, err
 	}
 
-	err = r.reconcileListenerSecret(backend.ListenerSecret())
+	secret, err := backend.ListenerSecret(&r.apiManager.Namespace, nil)
 	if err != nil {
 		return reconcile.Result{}, err
+	}
+	err = r.reconcileListenerSecret(secret)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	for _, apicast := range r.apiManager.Spec.Apicasts {
+		secret, err := backend.ListenerSecret(&r.apiManager.Namespace, apicast.Namespace)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+		err = r.reconcileListenerSecret(secret)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
 	}
 
 	return reconcile.Result{}, nil
