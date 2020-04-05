@@ -10,9 +10,11 @@ spec:
     - environment: development
       replicas: 1
       namespace: api-dev
+      openSSLVerify: false
     - environment: production
       replicas: 1
       namespace: api-prod
+      openSSLVerify: false
   system:
     fileStorage:
       persistentVolumeClaim:
