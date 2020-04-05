@@ -7,8 +7,10 @@ This requires an account on quay.io
 3. `make push IMAGE=quay.io/kjanania/3scale-bof-summit-2020 VERSION=summit-2.7`
    (Careful, could take 15 or so minutes for it to become available)
 
+## Setup Script
+1. `./summit-setup.sh`
 
-## Launching a Cluster
+## Step by Step Install
 1. Assign 6 CPUs and at least 18GB or RAM to CodeReady Containers
 2. `crc setup`
 3. `crc start`
