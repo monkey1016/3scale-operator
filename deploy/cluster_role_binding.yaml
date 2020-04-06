@@ -5,8 +5,8 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: 3scale-operator
-  namespace: 3scale
+  namespace: 3scale-operator-custom
 roleRef:
   kind: ClusterRole
-  name: 3scale-operator
+  name: 3scale-operator-custom
   apiGroup: rbac.authorization.k8s.io

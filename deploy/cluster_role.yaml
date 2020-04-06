@@ -2,7 +2,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   creationTimestamp: null
-  name: 3scale-operator
+  name: 3scale-operator-custom
 rules:
 - apiGroups:
   - ""
@@ -86,13 +86,13 @@ rules:
   - get
   - create
 - apiGroups:
-  - apps.3scale.net
+  - apps.3scale-khaled.net
   resources:
   - '*'
   verbs:
   - '*'
 - apiGroups:
-  - capabilities.3scale.net
+  - capabilities.3scale-khaled.net
   resources:
   - '*'
   - bindings
