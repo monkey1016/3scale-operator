@@ -572,6 +572,10 @@ func (system *System) appPodVolumes() []v1.Volume {
 						Key:  "service_discovery.yml",
 						Path: "service_discovery.yml",
 					},
+					v1.KeyToPath{
+						Key:  "settings.yml",
+						Path: "settings.yml",
+					},
 				},
 			},
 		},
@@ -1194,6 +1198,7 @@ func (system *System) SystemConfigMap() *v1.ConfigMap {
 			"zync.yml":              system.getSystemZyncConfData(),
 			"rolling_updates.yml":   system.getSystemRollingUpdatesConfData(),
 			"service_discovery.yml": system.getSystemServiceDiscoveryData(),
+			"settings.yml":          system.getSystemSettingsOverrides(),
 		},
 	}
 }
@@ -1231,6 +1236,58 @@ func (system *System) getSystemServiceDiscoveryData() string {
   max_retry: 5
   verify_ssl: <%= OpenSSL::SSL::VERIFY_NONE %> # 0
 `
+}
+
+func (system *System) getSystemSettingsOverrides() string {
+	return `base: &default
+  superdomain: <%= superdomain = ENV.fetch('THREESCALE_SUPERDOMAIN', 'example.com') %>
+  apicast_internal_host_regexp: '\Asystem-(master|provider|developer)\Z|\Asystem-(master|provider|developer)\..*\.svc\.cluster\.local\Z'
+  secure_cookie: true
+  force_ssl: true
+  apicast_oauth: true
+  apicast_custom_url: true
+  apicast_configuration_driven: true
+  active_docs_url:
+  active_docs_proxy_disabled: true
+  asset_host:<%= ENV.fetch('RAILS_ASSET_HOST', nil) %>
+  events_shared_secret:<%= ENV['EVENTS_SHARED_SECRET'] %>
+  onpremises_api_docs_version: true
+  onpremises: true
+  recaptcha_public_key:<%= ENV.fetch('RECAPTCHA_PUBLIC_KEY', 'YOUR_RECAPTCHA_PUBLIC_KEY') %>
+  recaptcha_private_key:<%= ENV['RECAPTCHA_PRIVATE_KEY'] %>
+
+  # System Emails
+  noreply_email:<%= ENV.fetch('NOREPLY_EMAIL', "no-reply@#{superdomain}") %>
+  support_email:<%= ENV.fetch('SUPPORT_EMAIL', "#{superdomain} Support <support@#{superdomain}>") %>
+  sales_email:<%= ENV.fetch('SALES_EMAIL', "sales@#{superdomain}") %>
+  notification_email:<%= ENV.fetch('NOTIFICATION_EMAIL', "#{superdomain} Notification <no-reply@#{superdomain}>") %>
+  golive_email:<%= ENV.fetch('GOLIVE_EMAIL', "golive@#{superdomain}") %>
+  sysadmin_email:<%= ENV.fetch('SYSADMIN_EMAIL', "sysadmin@#{superdomain}") %>
+  impersonation_admin:
+    username:<%= ENV.fetch('IMPERSONATION_ADMIN_USERNAME', '3scaleadmin') %>
+    domain:<%= ENV.fetch('IMPERSONATION_ADMIN_DOMAIN', '3scale.net') %>
+
+  readonly_custom_domains_settings: false
+  report_traffic: false
+  hide_basic_switches: true
+  tenant_mode:<%= ENV['TENANT_MODE'] %>
+  db_secret:
+
+  assets_cdn_host:<%= ENV.fetch('ASSETS_CDN_HOST', '') %>
+  zync_authentication_token:<%= ENV.fetch('ZYNC_AUTHENTICATON_TOKEN', '') %>
+
+  email_sanitizer:
+    enabled:<%= ENV.fetch('EMAIL_SANITIZER_ENABLED', Rails.env.preview?) %>
+    to:<%= ENV.fetch('EMAIL_SANITIZER_TO', 'sanitizer@example.com') %>
+
+  active_merchant_logging: false
+  billing_canaries:
+
+preview:
+  <<: *default
+
+production:
+  <<: *default`
 }
 
 func (system *System) SphinxDeploymentConfig() *appsv1.DeploymentConfig {
