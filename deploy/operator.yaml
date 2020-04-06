@@ -15,7 +15,7 @@ spec:
       serviceAccountName: 3scale-operator
       containers:
         - name: 3scale-operator
-          image: REPLACE_IMAGE
+          image: registry.redhat.io/3scale-amp2/3scale-rhel7-operator:3scale2.7
           command:
             - 3scale-operator
           imagePullPolicy: Always
