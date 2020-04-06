@@ -2,7 +2,7 @@
 
 // Package v1alpha1 contains API Schema definitions for the capabilities v1alpha1 API group
 // +k8s:deepcopy-gen=package,register
-// +groupName=capabilities.3scale.net
+// +groupName=capabilities.3scale-khaled.net
 package v1alpha1
 
 import (
@@ -12,7 +12,7 @@ import (
 
 const (
 	version    = "v1alpha1"
-	groupName  = "capabilities.3scale.net"
+	groupName  = "capabilities.3scale-khaled.net"
 	TenantKind = "Tenant"
 )
 
