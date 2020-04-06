@@ -4,4 +4,4 @@ metadata:
   name: example-apimanager
 spec:
   wildcardDomain: apps.cluster-nyc-6b8f.nyc-6b8f.example.opentlc.com
-  resourceRequirementsEnabled: true
+  resourceRequirementsEnabled: false

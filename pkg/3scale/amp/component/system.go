@@ -949,7 +949,7 @@ func (system *System) SharedStorage() *v1.PersistentVolumeClaim {
 		Spec: v1.PersistentVolumeClaimSpec{
 			StorageClassName: system.Options.storageClassName,
 			AccessModes: []v1.PersistentVolumeAccessMode{
-				v1.ReadWriteMany,
+				v1.ReadWriteOnce,
 			},
 			Resources: v1.ResourceRequirements{
 				Requests: v1.ResourceList{
