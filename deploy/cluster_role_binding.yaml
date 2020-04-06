@@ -1,7 +1,7 @@
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: 3scale-operator
+  name: 3scale-operator-custom
 subjects:
 - kind: ServiceAccount
   name: 3scale-operator
