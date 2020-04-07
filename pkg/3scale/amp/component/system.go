@@ -1249,7 +1249,6 @@ func (system *System) getSystemSettingsOverrides() string {
   apicast_configuration_driven: true
   active_docs_url:
   active_docs_proxy_disabled: true
-<<<<<<< HEAD
   asset_host: <%= ENV.fetch('RAILS_ASSET_HOST', nil) %>
   events_shared_secret: <%= ENV['EVENTS_SHARED_SECRET'] %>
   onpremises_api_docs_version: true
@@ -1267,30 +1266,10 @@ func (system *System) getSystemSettingsOverrides() string {
   impersonation_admin:
     username: <%= ENV.fetch('IMPERSONATION_ADMIN_USERNAME', '3scaleadmin') %>
     domain: <%= ENV.fetch('IMPERSONATION_ADMIN_DOMAIN', '3scale.net') %>
-=======
-  asset_host:<%= ENV.fetch('RAILS_ASSET_HOST', nil) %>
-  events_shared_secret:<%= ENV['EVENTS_SHARED_SECRET'] %>
-  onpremises_api_docs_version: true
-  onpremises: true
-  recaptcha_public_key:<%= ENV.fetch('RECAPTCHA_PUBLIC_KEY', 'YOUR_RECAPTCHA_PUBLIC_KEY') %>
-  recaptcha_private_key:<%= ENV['RECAPTCHA_PRIVATE_KEY'] %>
-
-  # System Emails
-  noreply_email:<%= ENV.fetch('NOREPLY_EMAIL', "no-reply@#{superdomain}") %>
-  support_email:<%= ENV.fetch('SUPPORT_EMAIL', "#{superdomain} Support <support@#{superdomain}>") %>
-  sales_email:<%= ENV.fetch('SALES_EMAIL', "sales@#{superdomain}") %>
-  notification_email:<%= ENV.fetch('NOTIFICATION_EMAIL', "#{superdomain} Notification <no-reply@#{superdomain}>") %>
-  golive_email:<%= ENV.fetch('GOLIVE_EMAIL', "golive@#{superdomain}") %>
-  sysadmin_email:<%= ENV.fetch('SYSADMIN_EMAIL', "sysadmin@#{superdomain}") %>
-  impersonation_admin:
-    username:<%= ENV.fetch('IMPERSONATION_ADMIN_USERNAME', '3scaleadmin') %>
-    domain:<%= ENV.fetch('IMPERSONATION_ADMIN_DOMAIN', '3scale.net') %>
->>>>>>> 27a7544e975289caddfbccf16778ab4e2c9d0062
 
   readonly_custom_domains_settings: false
   report_traffic: false
   hide_basic_switches: true
-<<<<<<< HEAD
   tenant_mode: <%= ENV['TENANT_MODE'] %>
   db_secret:
 
@@ -1300,17 +1279,6 @@ func (system *System) getSystemSettingsOverrides() string {
   email_sanitizer:
     enabled: <%= ENV.fetch('EMAIL_SANITIZER_ENABLED', Rails.env.preview?) %>
     to: <%= ENV.fetch('EMAIL_SANITIZER_TO', 'sanitizer@example.com') %>
-=======
-  tenant_mode:<%= ENV['TENANT_MODE'] %>
-  db_secret:
-
-  assets_cdn_host:<%= ENV.fetch('ASSETS_CDN_HOST', '') %>
-  zync_authentication_token:<%= ENV.fetch('ZYNC_AUTHENTICATON_TOKEN', '') %>
-
-  email_sanitizer:
-    enabled:<%= ENV.fetch('EMAIL_SANITIZER_ENABLED', Rails.env.preview?) %>
-    to:<%= ENV.fetch('EMAIL_SANITIZER_TO', 'sanitizer@example.com') %>
->>>>>>> 27a7544e975289caddfbccf16778ab4e2c9d0062
 
   active_merchant_logging: false
   billing_canaries:
