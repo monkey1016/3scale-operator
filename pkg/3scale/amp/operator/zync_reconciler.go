@@ -68,19 +68,32 @@ func (r *ZyncReconciler) Reconcile() (reconcile.Result, error) {
 		return reconcile.Result{}, err
 	}
 
-	err = r.reconcileQueRole(zync.QueRole())
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-
 	err = r.reconcileQueServiceAccount(zync.QueServiceAccount())
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
-	err = r.reconcileQueRoleBinding(zync.QueRoleBinding())
+	// Regular role and binding for API Manager namespace
+	err = r.reconcileQueRole(zync.QueRole(nil))
 	if err != nil {
 		return reconcile.Result{}, err
+	}
+
+	err = r.reconcileQueRoleBinding(zync.QueRoleBinding(nil, nil))
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	// Roles and bindings for APIcast namespaces
+	for _, apicast := range r.apiManager.Spec.Apicasts {
+		err = r.reconcileQueRole(zync.QueRole(apicast.Namespace))
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+		err = r.reconcileQueRoleBinding(zync.QueRoleBinding(apicast.Namespace, &r.apiManager.Namespace))
+		if err != nil {
+			return reconcile.Result{}, err
+		}
 	}
 
 	err = r.reconcileZyncDeploymentConfig(zync.DeploymentConfig())

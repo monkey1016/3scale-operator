@@ -32,15 +32,27 @@ func NewZync(options *ZyncOptions) *Zync {
 }
 
 func (zync *Zync) Objects() []common.KubernetesObject {
-	queRole := zync.QueRole()
+	queRole := zync.QueRole(nil)
 	queServiceAccount := zync.QueServiceAccount()
-	queRoleBinding := zync.QueRoleBinding()
+	queRoleBinding := zync.QueRoleBinding(nil, nil)
 	deploymentConfig := zync.DeploymentConfig()
 	queDeploymentConfig := zync.QueDeploymentConfig()
 	databaseDeploymentConfig := zync.DatabaseDeploymentConfig()
 	service := zync.Service()
 	databaseService := zync.DatabaseService()
 	secret := zync.Secret()
+
+	var apicastNamespaceRoles []common.KubernetesObject
+	for _, apicastNamespace := range zync.Options.apicastNamespaces {
+		zyncRole := zync.QueRole(apicastNamespace)
+		apicastNamespaceRoles = append(apicastNamespaceRoles, zyncRole)
+	}
+
+	var apicastNamespaceRoleBindings []common.KubernetesObject
+	for _, apicastNamespace := range zync.Options.apicastNamespaces {
+		zyncRoleBinding := zync.QueRoleBinding(apicastNamespace, zync.Options.zyncNamespace)
+		apicastNamespaceRoleBindings = append(apicastNamespaceRoleBindings, zyncRoleBinding)
+	}
 
 	objects := []common.KubernetesObject{
 		queRole,
@@ -53,6 +65,8 @@ func (zync *Zync) Objects() []common.KubernetesObject {
 		databaseService,
 		secret,
 	}
+	objects = append(objects, apicastNamespaceRoles...)
+	objects = append(objects, apicastNamespaceRoleBindings...)
 	return objects
 }
 
@@ -96,8 +110,8 @@ func (zync *Zync) QueServiceAccount() *v1.ServiceAccount {
 	}
 }
 
-func (zync *Zync) QueRoleBinding() *rbacv1.RoleBinding {
-	return &rbacv1.RoleBinding{
+func (zync *Zync) QueRoleBinding(namespace *string, zyncNamespace *string) *rbacv1.RoleBinding {
+	binding := rbacv1.RoleBinding{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "rbac.authorization.k8s.io/v1",
 			Kind:       "RoleBinding",
@@ -117,10 +131,15 @@ func (zync *Zync) QueRoleBinding() *rbacv1.RoleBinding {
 			Name:     "zync-que-role",
 		},
 	}
+	if namespace != nil && zyncNamespace != nil {
+		binding.Namespace = *namespace
+		binding.Subjects[0].Namespace = *zyncNamespace
+	}
+	return &binding
 }
 
-func (zync *Zync) QueRole() *rbacv1.Role {
-	return &rbacv1.Role{
+func (zync *Zync) QueRole(namespace *string) *rbacv1.Role {
+	role := rbacv1.Role{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "rbac.authorization.k8s.io/v1",
 			Kind:       "Role",
@@ -184,6 +203,11 @@ func (zync *Zync) QueRole() *rbacv1.Role {
 			},
 		},
 	}
+	if namespace != nil {
+		role.Namespace = *namespace
+	}
+
+	return &role
 }
 
 func (zync *Zync) DeploymentConfig() *appsv1.DeploymentConfig {

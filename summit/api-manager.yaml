@@ -4,7 +4,7 @@ metadata:
   name: testing-apimanager
   namespace: apimanager
 spec:
-  wildcardDomain: apps.cluster-nyc-6b8f.nyc-6b8f.example.opentlc.com
+  wildcardDomain: summit.apps.cluster-nyc-6b8f.nyc-6b8f.example.opentlc.com
   resourceRequirementsEnabled: false
   apicasts:
     - environment: development

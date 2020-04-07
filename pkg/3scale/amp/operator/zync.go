@@ -25,6 +25,13 @@ func (o *OperatorZyncOptionsProvider) GetZyncOptions() (*component.ZyncOptions, 
 	if err != nil {
 		return nil, fmt.Errorf("unable to create Zync Options - %s", err)
 	}
+
+	var namespaces []*string
+	for _, apicast := range o.APIManagerSpec.Apicasts {
+		namespaces = append(namespaces, apicast.Namespace)
+	}
+	optProv.ApicastNamespaces(namespaces)
+	optProv.ZyncNamespace(&o.Namespace)
 	return res, nil
 }
 

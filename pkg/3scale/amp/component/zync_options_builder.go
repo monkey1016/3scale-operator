@@ -21,6 +21,10 @@ type ZyncOptions struct {
 	authenticationToken string
 	databasePassword    string
 	secretKeyBase       string
+
+	// allow access to apicast namespaces
+	apicastNamespaces []*string
+	zyncNamespace     *string
 }
 
 type ZyncOptionsBuilder struct {
@@ -65,6 +69,14 @@ func (z *ZyncOptionsBuilder) ZyncReplicas(replicas int32) {
 
 func (z *ZyncOptionsBuilder) ZyncQueReplicas(replicas int32) {
 	z.options.zyncQueReplicas = &replicas
+}
+
+func (z *ZyncOptionsBuilder) ApicastNamespaces(namespaces []*string) {
+	z.options.apicastNamespaces = namespaces
+}
+
+func (z *ZyncOptionsBuilder) ZyncNamespace(namespace *string) {
+	z.options.zyncNamespace = namespace
 }
 
 func (z *ZyncOptionsBuilder) Build() (*ZyncOptions, error) {
