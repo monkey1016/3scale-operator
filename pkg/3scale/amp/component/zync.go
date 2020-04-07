@@ -41,6 +41,7 @@ func (zync *Zync) Objects() []common.KubernetesObject {
 	service := zync.Service()
 	databaseService := zync.DatabaseService()
 	secret := zync.Secret()
+	zyncConfigMap := zync.ZyncConfigMap()
 
 	var apicastNamespaceRoles []common.KubernetesObject
 	for _, apicastNamespace := range zync.Options.apicastNamespaces {
@@ -64,6 +65,7 @@ func (zync *Zync) Objects() []common.KubernetesObject {
 		service,
 		databaseService,
 		secret,
+		zyncConfigMap,
 	}
 	objects = append(objects, apicastNamespaceRoles...)
 	objects = append(objects, apicastNamespaceRoleBindings...)
@@ -360,6 +362,41 @@ func (zync *Zync) commonZyncEnvVars() []v1.EnvVar {
 		},
 	}
 }
+
+func (zync *Zync) ZyncConfigMap() *v1.ConfigMap {
+	return &v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "zync",
+			Labels: map[string]string{
+				"app":                  zync.Options.appLabel,
+				"threescale_component": "zync",
+			},
+		},
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ConfigMap",
+			APIVersion: "v1",
+		},
+		Data: map[string]string{
+			"openshift.yml": `default: &default
+  enabled: <%=
+    ENV.values_at(
+      'SYSTEM_DEVELOPER_SERVICE_PORT_HTTP',
+      'SYSTEM_PROVIDER_SERVICE_PORT_HTTP',
+      'SYSTEM_MASTER_SERVICE_PORT_HTTP',
+    ).all?
+  %>
+
+development:
+  <<: *default
+production:
+  <<: *default
+
+test:
+  enabled: false`,
+		},
+	}
+}
+
 func (zync *Zync) QueDeploymentConfig() *appsv1.DeploymentConfig {
 	return &appsv1.DeploymentConfig{
 		TypeMeta: metav1.TypeMeta{
@@ -429,7 +466,7 @@ func (zync *Zync) QueDeploymentConfig() *appsv1.DeploymentConfig {
 						v1.Container{
 							Name:            "que",
 							Command:         []string{"/usr/bin/bash"},
-							Args:            []string{"-c", "bundle exec rake 'que[--worker-count 10]'"},
+							Args:            []string{"-c", "ln -sf /opt/extra-configs/openshift.yml /opt/zync/config/ && bundle exec rake 'que[--worker-count 10]'"},
 							Image:           "amp-zync:latest",
 							ImagePullPolicy: v1.PullAlways,
 							LivenessProbe: &v1.Probe{
@@ -451,6 +488,31 @@ func (zync *Zync) QueDeploymentConfig() *appsv1.DeploymentConfig {
 							},
 							Resources: *zync.Options.queContainerResourceRequirements,
 							Env:       zync.commonZyncEnvVars(),
+							VolumeMounts: []v1.VolumeMount{
+								v1.VolumeMount{
+									Name:      "zync-config",
+									ReadOnly:  false,
+									MountPath: "/opt/extra-configs",
+								},
+							},
+						},
+					},
+					Volumes: []v1.Volume{
+						v1.Volume{
+							Name: "zync-config",
+							VolumeSource: v1.VolumeSource{
+								ConfigMap: &v1.ConfigMapVolumeSource{
+									LocalObjectReference: v1.LocalObjectReference{
+										Name: "zync",
+									},
+									Items: []v1.KeyToPath{
+										v1.KeyToPath{
+											Key:  "openshift.yml",
+											Path: "openshift.yml",
+										},
+									},
+								},
+							},
 						},
 					},
 				},

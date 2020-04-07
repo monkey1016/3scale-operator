@@ -96,6 +96,11 @@ func (r *ZyncReconciler) Reconcile() (reconcile.Result, error) {
 		}
 	}
 
+	err = r.reconcileZyncConfigMap(zync.ZyncConfigMap())
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
 	err = r.reconcileZyncDeploymentConfig(zync.DeploymentConfig())
 	if err != nil {
 		return reconcile.Result{}, err
@@ -183,4 +188,9 @@ func (r *ZyncReconciler) reconcileZyncSecret(desiredSecret *v1.Secret) error {
 	// Secret values are not affected by CR field values
 	reconciler := NewSecretBaseReconciler(r.BaseAPIManagerLogicReconciler, NewDefaultsOnlySecretReconciler())
 	return reconciler.Reconcile(desiredSecret)
+}
+
+func (r *ZyncReconciler) reconcileZyncConfigMap(desiredConfigMap *v1.ConfigMap) error {
+	reconciler := NewConfigMapBaseReconciler(r.BaseAPIManagerLogicReconciler, NewCreateOnlyConfigMapReconciler())
+	return reconciler.Reconcile(desiredConfigMap)
 }
