@@ -3,6 +3,7 @@ package component
 import (
 	"github.com/3scale/3scale-operator/pkg/common"
 
+	capabilitiesv1alpha1 "github.com/3scale/3scale-operator/pkg/apis/capabilities/v1alpha1"
 	appsv1 "github.com/openshift/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -401,11 +402,52 @@ func (apicast *Apicast) EnvironmentConfigMap() *v1.ConfigMap {
 	}
 }
 
-func (apicast *Apicast) DeploymentConfig(systemNamespace *string) *appsv1.DeploymentConfig {
+func (apicast *Apicast) EnvironmentTenant(systemNamespace *string) *capabilitiesv1alpha1.Tenant {
+	return &capabilitiesv1alpha1.Tenant{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: capabilitiesv1alpha1.SchemeGroupVersion.String(),
+			Kind:       capabilitiesv1alpha1.TenantKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: *apicast.Options.namespace,
+			Name:      *apicast.Options.environment,
+			Labels: map[string]string{
+				"app":                          apicast.Options.appLabel,
+				"threescale_component":         "apicast",
+				"threescale_component_element": *apicast.Options.environment,
+			},
+		},
+		Spec: capabilitiesv1alpha1.TenantSpec{
+			Username:         "admin",
+			SystemMasterUrl:  *(getSystemMasterUrl(systemNamespace)),
+			Email:            "admin@3scale-operator.com",
+			OrganizationName: *apicast.Options.environment,
+			MasterCredentialsRef: v1.SecretReference{
+				Name:      "system-seed",
+				Namespace: *systemNamespace,
+			},
+			PasswordCredentialsRef: v1.SecretReference{
+				Name:      *apicast.Options.environment,
+				Namespace: *apicast.Options.namespace,
+			},
+			TenantSecretRef: v1.SecretReference{
+				Name:      "tenant-" + *apicast.Options.environment,
+				Namespace: *apicast.Options.namespace,
+			},
+		},
+	}
+}
+
+func getSystemMasterUrl(systemNamespace *string) *string {
 	systemMasterURL := "http://system-master:3000/status"
 	if systemNamespace != nil {
 		systemMasterURL = "http://system-master." + *systemNamespace + ".svc.cluster.local:3000/status"
 	}
+	return &systemMasterURL
+}
+
+func (apicast *Apicast) DeploymentConfig(systemNamespace *string) *appsv1.DeploymentConfig {
+	systemMasterUrl := *(getSystemMasterUrl(systemNamespace))
 	return &appsv1.DeploymentConfig{
 		TypeMeta: metav1.TypeMeta{APIVersion: "apps.openshift.io/v1", Kind: "DeploymentConfig"},
 		ObjectMeta: metav1.ObjectMeta{
@@ -476,7 +518,7 @@ func (apicast *Apicast) DeploymentConfig(systemNamespace *string) *appsv1.Deploy
 						v1.Container{
 							Name:    "system-master-svc",
 							Image:   "amp-apicast:latest",
-							Command: []string{"sh", "-c", "until $(curl --output /dev/null --silent --fail --head " + systemMasterURL + "); do sleep $SLEEP_SECONDS; done"},
+							Command: []string{"sh", "-c", "until $(curl --output /dev/null --silent --fail --head " + systemMasterUrl + "); do sleep $SLEEP_SECONDS; done"},
 							Env: []v1.EnvVar{
 								v1.EnvVar{
 									Name:  "SLEEP_SECONDS",

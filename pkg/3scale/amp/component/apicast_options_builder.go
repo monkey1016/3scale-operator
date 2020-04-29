@@ -22,6 +22,7 @@ type ApicastOptions struct {
 	replicas                    *int32
 	namespace                   *string
 	environment                 *string
+	createTenant                bool
 }
 
 type ApicastOptionsBuilder struct {
@@ -42,6 +43,14 @@ func (a *ApicastOptionsBuilder) OpenSSLVerify(openSSLVerify string) {
 
 func (a *ApicastOptionsBuilder) ResponseCodes(responseCodes string) {
 	a.options.responseCodes = responseCodes
+}
+
+func (a *ApicastOptionsBuilder) CreateTenant(createTenant *bool) {
+	if createTenant != nil {
+		a.options.createTenant = *createTenant
+	} else {
+		a.options.createTenant = false
+	}
 }
 
 func (a *ApicastOptionsBuilder) TenantName(tenantName string) {

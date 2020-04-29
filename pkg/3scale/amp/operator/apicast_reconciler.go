@@ -3,6 +3,7 @@ package operator
 import (
 	"github.com/3scale/3scale-operator/pkg/3scale/amp/component"
 	appsv1alpha1 "github.com/3scale/3scale-operator/pkg/apis/apps/v1alpha1"
+	capabilitiesv1alpha1 "github.com/3scale/3scale-operator/pkg/apis/capabilities/v1alpha1"
 	appsv1 "github.com/openshift/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -76,6 +77,8 @@ func (r *ApicastReconciler) Reconcile() (reconcile.Result, error) {
 		return reconcile.Result{}, err
 	}
 
+	// Create a tenant for this
+	err = r.reconcileTenant(apicast.EnvironmentTenant(&r.apiManager.Namespace))
 	err = r.reconcileDeploymentConfig(apicast.DeploymentConfig(&r.apiManager.Namespace))
 	if err != nil {
 		return reconcile.Result{}, err
@@ -85,26 +88,6 @@ func (r *ApicastReconciler) Reconcile() (reconcile.Result, error) {
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-	// for _, apicast := r.apicast().
-	// err = r.reconcileStagingDeploymentConfig(apicast.StagingDeploymentConfig())
-	// if err != nil {
-	// 	return reconcile.Result{}, err
-	// }
-
-	// err = r.reconcileProductionDeploymentConfig(apicast.ProductionDeploymentConfig())
-	// if err != nil {
-	// 	return reconcile.Result{}, err
-	// }
-
-	// err = r.reconcileStagingService(apicast.StagingService())
-	// if err != nil {
-	// 	return reconcile.Result{}, err
-	// }
-
-	// err = r.reconcileProductionService(apicast.ProductionService())
-	// if err != nil {
-	// 	return reconcile.Result{}, err
-	// }
 
 	err = r.reconcileEnvironmentConfigMap(apicast.EnvironmentConfigMap())
 	if err != nil {
@@ -131,6 +114,11 @@ func (r *ApicastReconciler) apicast() (*component.Apicast, error) {
 func (r *ApicastReconciler) reconcileDeploymentConfig(desiredDeploymentConfig *appsv1.DeploymentConfig) error {
 	reconciler := NewDeploymentConfigBaseReconciler(r.BaseAPIManagerLogicReconciler, NewApicastDCReconciler(r.BaseAPIManagerLogicReconciler))
 	return reconciler.Reconcile(desiredDeploymentConfig)
+}
+
+func (r *ApicastReconciler) reconcileTenant(desiredTentant *capabilitiesv1alpha1.Tenant) error {
+	reconciler := NewTenantBaseReconciler(r.BaseAPIManagerLogicReconciler, *(NewTenantReconciler(r.BaseAPIManagerLogicReconciler)))
+	return reconciler.Reconcile(desiredTentant)
 }
 
 // func (r *ApicastReconciler) reconcileProductionDeploymentConfig(desiredDeploymentConfig *appsv1.DeploymentConfig) error {

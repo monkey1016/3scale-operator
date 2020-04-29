@@ -16,6 +16,7 @@ func (o *OperatorApicastOptionsProvider) GetApicastOptions() (*component.Apicast
 	optProv.ManagementAPI(*o.ApicastSpec.ApicastManagementAPI)
 	optProv.OpenSSLVerify(strconv.FormatBool(*o.ApicastSpec.OpenSSLVerify))        // TODO is this a good place to make the conversion?
 	optProv.ResponseCodes(strconv.FormatBool(*o.ApicastSpec.IncludeResponseCodes)) // TODO is this a good place to make the conversion?
+	optProv.CreateTenant(o.ApicastSpec.CreateTenant)
 
 	o.setResourceRequirementsOptions(&optProv)
 	o.setReplicas(&optProv)

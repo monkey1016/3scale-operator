@@ -122,6 +122,8 @@ type ApicastSpec struct {
 	Environment *string `json:"environment,omitempty"`
 	Replicas    *int64  `json:"replicas,omitempty"`
 	Namespace   *string `json:"namespace,omitempty"`
+	// +optional
+	CreateTenant *bool `json:"createTenant,omitempty"`
 }
 
 // type ApicastProductionSpec struct {
@@ -332,6 +334,7 @@ func (apimanager *APIManager) setApicastSpecDefaults() bool {
 	defaultApicastManagementAPI := "status"
 	defaultApicastOpenSSLVerify := false
 	defaultApicastResponseCodes := true
+	defaultApicastCreateTenant := true
 	defaultApicastRegistryURL := "http://apicast-staging:8090/policies"
 	defaultProductionEnvironment := "production"
 	defaultStagingEnvironment := "staging"
@@ -370,6 +373,10 @@ func (apimanager *APIManager) setApicastSpecDefaults() bool {
 			}
 			if apicast.IncludeResponseCodes == nil {
 				apicast.IncludeResponseCodes = &defaultApicastResponseCodes
+				changed = true
+			}
+			if apicast.CreateTenant == nil {
+				apicast.CreateTenant = &defaultApicastCreateTenant
 				changed = true
 			}
 			if apicast.ApicastManagementAPI == nil {

@@ -40,11 +40,11 @@ const TenantAdminDomainKeySecretField = "adminURL"
 // Add creates a new Tenant Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
-	return add(mgr, newReconciler(mgr))
+	return add(mgr, newTenantReconciler(mgr))
 }
 
-// newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
+// newTenantReconciler returns a new reconcile.Reconciler
+func newTenantReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &ReconcileTenant{client: mgr.GetClient(), scheme: mgr.GetScheme()}
 }
 
@@ -145,9 +145,8 @@ func FetchMasterCredentials(k8sClient client.Client, tenantR *apiv1alpha1.Tenant
 
 	err := k8sClient.Get(context.TODO(),
 		types.NamespacedName{
-			Name: tenantR.Spec.MasterCredentialsRef.Name,
-			// Master credential secret MUST be on same namespace as tenant CR
-			Namespace: tenantR.Namespace,
+			Name:      tenantR.Spec.MasterCredentialsRef.Name,
+			Namespace: tenantR.Spec.MasterCredentialsRef.Namespace,
 		},
 		masterCredentialsSecret)
 
