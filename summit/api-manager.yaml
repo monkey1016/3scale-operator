@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: development
+  name: dev
   namespace: api-dev
 stringData:
   admin_password: test-password-changeme
@@ -10,7 +10,16 @@ type: Opaque
 apiVersion: v1
 kind: Secret
 metadata:
-  name: production
+  name: uat
+  namespace: api-uat
+stringData:
+  admin_password: test-password-changeme
+type: Opaque
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: prod
   namespace: api-prod
 stringData:
   admin_password: test-password-changeme
@@ -25,11 +34,15 @@ spec:
   wildcardDomain: summit.apps.cluster-nyc-6b8f.nyc-6b8f.example.opentlc.com
   resourceRequirementsEnabled: false
   apicasts:
-    - environment: development
+    - environment: dev
       replicas: 1
       namespace: api-dev
       openSSLVerify: false
-    - environment: production
+    - environment: uat
+      replicas: 1
+      namespace: api-uat
+      openSSLVerify: false
+    - environment: prod
       replicas: 1
       namespace: api-prod
       openSSLVerify: false
