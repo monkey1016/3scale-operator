@@ -25,13 +25,13 @@ stringData:
   admin_password: test-password-changeme
 type: Opaque
 ---
-apiVersion: apps.3scale-khaled.net/v1alpha1
+apiVersion: apps.3scale.hosted.net/v1alpha1
 kind: APIManager
 metadata:
   name: testing-apimanager
-  namespace: apimanager
+  namespace: 3scale-apimanager
 spec:
-  wildcardDomain: summit.apps.cluster-nyc-6b8f.nyc-6b8f.example.opentlc.com
+  wildcardDomain: hosted.apps.cluster-nyc-6b8f.nyc-6b8f.example.opentlc.com
   resourceRequirementsEnabled: false
   apicasts:
     - environment: dev

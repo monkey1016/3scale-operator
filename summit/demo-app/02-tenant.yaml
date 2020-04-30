@@ -1,4 +1,4 @@
-apiVersion: capabilities.3scale-khaled.net/v1alpha1
+apiVersion: capabilities.3scale.hosted.net/v1alpha1
 kind: Tenant
 metadata:
   name: redhat-summit-tenant

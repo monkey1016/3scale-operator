@@ -234,6 +234,11 @@ func (in *ApicastSpec) DeepCopyInto(out *ApicastSpec) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.CreateTenant != nil {
+		in, out := &in.CreateTenant, &out.CreateTenant
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 
