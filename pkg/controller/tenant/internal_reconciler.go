@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"reflect"
 
+	"net/url"
+
 	apiv1alpha1 "github.com/3scale/3scale-operator/pkg/apis/capabilities/v1alpha1"
 	porta_client_pkg "github.com/3scale/3scale-porta-go-client/client"
 	"github.com/go-logr/logr"
@@ -326,6 +328,8 @@ func (r *InternalReconciler) createTenantProviderKeySecret(tenantDef *porta_clie
 		return err
 	}
 
+	withTokenURL, _ := url.Parse(adminURL.String())
+	withTokenURL.User = url.User(tenantProviderKey)
 	secret := &v1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
@@ -339,6 +343,7 @@ func (r *InternalReconciler) createTenantProviderKeySecret(tenantDef *porta_clie
 		StringData: map[string]string{
 			TenantProviderKeySecretField:    tenantProviderKey,
 			TenantAdminDomainKeySecretField: adminURL.String(),
+			TenantProxyConfigsEndpointField: withTokenURL.String(),
 		},
 		Type: v1.SecretTypeOpaque,
 	}

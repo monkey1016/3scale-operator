@@ -32,6 +32,9 @@ const TenantProviderKeySecretField = "token"
 // Tenant's credentials secret field name for admin domain url
 const TenantAdminDomainKeySecretField = "adminURL"
 
+// Tenant's credentials secret field name for the portal endpoint
+const TenantProxyConfigsEndpointField = "PROXY_CONFIGS_ENDPOINT"
+
 /**
 * USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
 * business logic.  Delete these comments after modifying this file.*

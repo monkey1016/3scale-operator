@@ -1,11 +1,14 @@
 package operator
 
 import (
+	"context"
+
 	"github.com/3scale/3scale-operator/pkg/3scale/amp/component"
 	appsv1alpha1 "github.com/3scale/3scale-operator/pkg/apis/apps/v1alpha1"
 	capabilitiesv1alpha1 "github.com/3scale/3scale-operator/pkg/apis/capabilities/v1alpha1"
 	appsv1 "github.com/openshift/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -77,9 +80,30 @@ func (r *ApicastReconciler) Reconcile() (reconcile.Result, error) {
 		return reconcile.Result{}, err
 	}
 
-	// Create a tenant for this
-	err = r.reconcileTenant(apicast.EnvironmentTenant(&r.apiManager.Namespace))
-	err = r.reconcileDeploymentConfig(apicast.DeploymentConfig(&r.apiManager.Namespace))
+	var portalEnpointSecret *string
+	if *(r.apicastSpec.CreateTenant) {
+		// Create a tenant for this
+		environmentTenant := apicast.EnvironmentTenant(&r.apiManager.Namespace)
+		err = r.reconcileTenant(environmentTenant)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+
+		// Get the THREESCALE_PORTAL_ENDPOINT for the newly created tenant
+		existingSecret := &v1.Secret{}
+		existingSecret.Name = environmentTenant.Spec.TenantSecretRef.Name
+		existingSecret.Namespace = environmentTenant.Spec.TenantSecretRef.Namespace
+
+		err := r.Client().Get(
+			context.TODO(),
+			types.NamespacedName{Name: existingSecret.Name, Namespace: existingSecret.Namespace},
+			existingSecret)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+		portalEnpointSecret = &existingSecret.Name
+	}
+	err = r.reconcileDeploymentConfig(apicast.DeploymentConfig(&r.apiManager.Namespace, portalEnpointSecret))
 	if err != nil {
 		return reconcile.Result{}, err
 	}
