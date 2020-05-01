@@ -16,8 +16,8 @@ import (
 // Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 
 const (
-	ThreescaleVersionAnnotation = "apps.3scale.net/apimanager-threescale-version"
-	OperatorVersionAnnotation   = "apps.3scale.net/threescale-operator-version"
+	ThreescaleVersionAnnotation = "apps.3scale.hosted.net/apimanager-threescale-version"
+	OperatorVersionAnnotation   = "apps.3scale.hosted.net/threescale-operator-version"
 )
 
 // APIManagerSpec defines the desired state of APIManager

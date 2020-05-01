@@ -4,16 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"reflect"
+	"sort"
+	"strings"
+
 	"github.com/3scale/3scale-operator/pkg/helper"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"log"
-	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sort"
-	"strings"
 )
 
 const BINDING_FINALIZER = "binding.capabilities.3scale.net"
@@ -395,12 +396,12 @@ func (b Binding) newInternalCredentials(c client.Client) (*InternalCredentials, 
 	// GET SECRET
 	secret := &v1.Secret{}
 	// TODO: fix namespace default
-	err := c.Get(context.TODO(), types.NamespacedName{Name: b.Spec.CredentialsRef.Name, Namespace: b.Namespace}, secret)
+	err := c.Get(context.TODO(), types.NamespacedName{Name: b.Spec.CredentialsRef.Name, Namespace: b.Spec.CredentialsRef.Namespace}, secret)
 
 	if err != nil && errors.IsNotFound(err) {
-		return nil, fmt.Errorf("credentialsNotFound")
+		return nil, fmt.Errorf("credentialsNotFound( %s:%s )", b.Spec.CredentialsRef.Name, b.Spec.CredentialsRef.Namespace)
 	} else if err != nil {
-		return nil, fmt.Errorf("errorGettingCredentials")
+		return nil, fmt.Errorf("errorGettingCredentials( %s:%s )", b.Spec.CredentialsRef.Name, b.Spec.CredentialsRef.Namespace)
 	}
 
 	return &InternalCredentials{
