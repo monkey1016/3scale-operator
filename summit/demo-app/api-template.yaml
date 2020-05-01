@@ -1,0 +1,128 @@
+apiVersion: v1
+kind: Template
+labels:
+  template: create-3scale-api
+metadata:
+  annotations:
+    description: Template to create a 3scale api backend
+    tags: 3scale-api
+    version: 1.0.0
+  name: create-3scale-api
+objects:
+- kind: API
+  apiVersion: capabilities.3scale.hosted.net/v1alpha1
+  metadata:
+    labels:
+      environment: production
+    name: ${SERVICE_NAME}
+    namespace: ${SYSTEM_MASTER_NAMESPACE}
+  spec:
+    # No plan selector for this demo
+    planSelector:
+      matchLabels:
+        api: ${SERVICE_NAME}
+    description: ${SERVICE_NAME}
+    integrationMethod:
+      apicastOnPrem:
+        apiTestGetRequest: /
+        authenticationSettings:
+          credentials:
+            apiKey:
+              authParameterName: user-key
+              credentialsLocation: headers
+          errors:
+            authenticationFailed:
+              contentType: text/plain; charset=us-ascii
+              responseBody: Authentication failed
+              responseCode: 403
+            authenticationMissing:
+              contentType: text/plain; charset=us-ascii
+              responseBody: Authentication Missing
+              responseCode: 403
+          hostHeader: ""
+          secretToken: ${SECRET_TOKEN}
+        mappingRulesSelector:
+          matchLabels:
+            api: ${SERVICE_NAME}
+        privateBaseURL: ${PRIVATE_BASE_URL}
+        stagingPublicBaseURL: ${PUBLIC_BASE_URL}
+        productionPublicBaseURL: ${PUBLIC_BASE_URL}
+    metricSelector:
+      matchLabels:
+        api: ${SERVICE_NAME}
+- kind: Metric
+  apiVersion: capabilities.3scale.hosted.net/v1alpha1
+  metadata:
+    labels:
+      api: ${SERVICE_NAME}
+    name: ${SERVICE_NAME}-metrics
+    namespace: ${SYSTEM_MASTER_NAMESPACE}
+  spec:
+    description: Counts the number of times an endpoint has been hit
+    unit: hit
+    incrementHits: true
+- kind: MappingRule
+  apiVersion: capabilities.3scale.hosted.net/v1alpha1
+  metadata:
+    labels:
+      api: ${SERVICE_NAME}
+    name: ${SERVICE_NAME}-mapping
+    namespace: ${SYSTEM_MASTER_NAMESPACE}
+  spec:
+    increment: 1
+    method: POST
+    metricRef:
+      name: ${SERVICE_NAME}-metrics
+    path: /person/v1.0/{id}
+- kind: Plan
+  apiVersion: capabilities.3scale.hosted.net/v1alpha1
+  metadata:
+    labels:
+      api: ${SERVICE_NAME}
+    name: ${SERVICE_NAME}-plan
+    namespace: ${SYSTEM_MASTER_NAMESPACE}
+  spec:
+    approvalRequired: false
+    default: true
+    costs:
+      costMonth: "0"
+      setupFee: "0"
+    limitSelector:
+      matchLabels:
+        api: ${SERVICE_NAME}
+    trialPeriod: 0
+- kind: Binding
+  apiVersion: capabilities.3scale.hosted.net/v1alpha1
+  metadata:
+    name: ${SERVICE_NAME}-binding
+    namespace: ${SYSTEM_MASTER_NAMESPACE}
+  spec:
+    credentialsRef:
+      name:  ${TENANT_TOKEN_SECRET}
+      namespace: ${TENANT_TOKEN_NAMESPACE}
+    APISelector:
+      matchLabels:
+        environment: production
+        api: ${SERVICE_NAME}
+parameters:
+- description: API Service Name
+  name: SERVICE_NAME
+  required: true
+- description: System master namespace
+  name: SYSTEM_MASTER_NAMESPACE
+  required: true
+- description: Tenant token to be used to connect through
+  name: SECRET_TOKEN
+  required: true
+- description: Private base URL, usually internal cluster service name or IP like http://172.30.130.119:8162
+  name: PRIVATE_BASE_URL
+  required: true
+- description: Production public base URL
+  name: PUBLIC_BASE_URL
+  required: true
+- description: Tenant token secret ref
+  name: TENANT_TOKEN_SECRET
+  required: true
+- description: Tenant token secret namespace
+  name: TENANT_TOKEN_NAMESPACE
+  required: true
