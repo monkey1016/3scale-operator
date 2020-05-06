@@ -1,0 +1,17 @@
+apiVersion: apps.3scale.net/v1alpha1
+kind: APIManager
+metadata:
+  name: testing-apimanager
+  namespace: 3scale-operator-default
+spec:
+  wildcardDomain: default.apps.cluster-nyc-3c57.nyc-3c57.example.opentlc.com
+  resourceRequirementsEnabled: false
+  apicast:
+    productionSpec:
+      replicas: 1
+    stagingSpec:
+      replicas: 1
+  system:
+    fileStorage:
+      persistentVolumeClaim:
+        accessMode: ReadWriteOnce

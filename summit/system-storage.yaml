@@ -1,0 +1,26 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: system-storage
+  namespace: 3scale-operator-default
+  ownerReferences:
+    - apiVersion: apps.3scale.net/v1alpha1
+      kind: APIManager
+      name: testing-apimanager
+      uid: 8e304888-8fa4-11ea-85f3-1221b25dd1af
+      controller: true
+      blockOwnerDeletion: true
+  finalizers:
+    - kubernetes.io/pvc-protection
+  labels:
+    app: 3scale-api-management
+    threescale_component: system
+    threescale_component_element: app
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+  storageClassName: gp2
+  volumeMode: Filesystem
