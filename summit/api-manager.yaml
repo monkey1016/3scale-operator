@@ -31,7 +31,7 @@ metadata:
   name: testing-apimanager
   namespace: 3scale-apimanager
 spec:
-  wildcardDomain: hosted.apps.cluster-nyc-6b8f.nyc-6b8f.example.opentlc.com
+  wildcardDomain: hosted.apps.cluster-nyc-3c57.nyc-3c57.example.opentlc.com
   resourceRequirementsEnabled: false
   apicasts:
     - environment: dev

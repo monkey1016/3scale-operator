@@ -14,5 +14,5 @@ oc -n 3scale-operator create -f deploy/service_account.yaml
 oc create -f deploy/cluster_role.yaml
 oc create -f deploy/cluster_role_binding.yaml
 
-oc -n 3scale create -f deploy/operator.yaml
+oc -n 3scale-operator create -f deploy/operator.yaml
 oc create -f summit/api-manager.yaml
