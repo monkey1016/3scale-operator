@@ -3,15 +3,19 @@ package v1alpha1
 import (
 	"context"
 	"fmt"
+	"log"
+	"sort"
+	"strconv"
+
 	portaClient "github.com/3scale/3scale-porta-go-client/client"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"log"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sort"
-	"strconv"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
+
+var planLogger = logf.Log.WithName("plan_types")
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -103,24 +107,31 @@ type planPair struct {
 	B InternalPlan
 }
 
-func (d *plansDiff) reconcileWith3scale(c *portaClient.ThreeScaleClient, serviceId string, api InternalAPI) error {
+func (d *plansDiff) reconcileWith3scale(c *portaClient.ThreeScaleClient, serviceId string, api InternalAPI) (*string, error) {
 
+	var userKey *string
 	for _, plan := range d.MissingFromA {
 		plan3scale, err := get3scalePlanFromInternalPlan(c, serviceId, plan)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		err = c.DeleteAppPlan(serviceId, plan3scale.ID)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	for _, plan := range d.MissingFromB {
 		plan3scale, err := c.CreateAppPlan(serviceId, plan.Name, "publish")
 		if err != nil {
-			return err
+			return nil, err
 		}
+
+		userKey, err = createApplicationforPlan(c, plan3scale)
+		if err != nil {
+			return nil, err
+		}
+
 		params := portaClient.Params{
 			"approval_required": strconv.FormatBool(plan.ApprovalRequired),
 			"setup_fee":         plan.Costs.SetupFee.String(),
@@ -129,7 +140,7 @@ func (d *plansDiff) reconcileWith3scale(c *portaClient.ThreeScaleClient, service
 		}
 		_, err = c.UpdateAppPlan(serviceId, plan3scale.ID, plan3scale.PlanName, "", params)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if plan.Default {
 			_, err = c.SetDefaultPlan(serviceId, plan3scale.ID)
@@ -138,7 +149,7 @@ func (d *plansDiff) reconcileWith3scale(c *portaClient.ThreeScaleClient, service
 	for _, planPair := range d.NotEqual {
 		plan3scale, err := get3scalePlanFromInternalPlan(c, serviceId, planPair.B)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		params := portaClient.Params{
 			"approval_required": strconv.FormatBool(planPair.A.ApprovalRequired),
@@ -154,7 +165,7 @@ func (d *plansDiff) reconcileWith3scale(c *portaClient.ThreeScaleClient, service
 
 		_, err = c.UpdateAppPlan(serviceId, plan3scale.ID, plan3scale.PlanName, stateEvent, params)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if planPair.A.Default {
@@ -164,11 +175,45 @@ func (d *plansDiff) reconcileWith3scale(c *portaClient.ThreeScaleClient, service
 		limitsDiff := diffLimits(planPair.A.Limits, planPair.B.Limits)
 		err = limitsDiff.reconcileWith3scale(c, serviceId, plan3scale.ID)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
-	return nil
+	return userKey, nil
 
+}
+
+func createApplicationforPlan(c *portaClient.ThreeScaleClient, plan portaClient.Plan) (*string, error) {
+	var userKey string
+	// TODO: Find the right account
+	accounts, err := c.ListAccounts()
+	if err != nil {
+		return nil, err
+	}
+	planLogger.Info("Searching for account to associate with Plan")
+	accountID := accounts.Accounts[0].Account.ID
+	applications, _ := c.ListApplications(accountID)
+	planIDInt, _ := strconv.Atoi(plan.ID)
+	foundApp := false
+	for _, application := range applications.Applications {
+		if application.Application.PlanID == int64(planIDInt) {
+			foundApp = true
+			userKey = application.Application.UserKey
+			planLogger.Info("Found application that matches plan: " + application.Application.AppName)
+			planLogger.Info("User key: " + userKey)
+			break
+		}
+	}
+	if !foundApp {
+		app3scale, err := c.CreateApp(strconv.FormatInt(accountID, 10), plan.ID, plan.PlanName, plan.PlanName)
+		if err != nil {
+			return nil, err
+		}
+		planLogger.Info("Created application: " + app3scale.AppName)
+		planLogger.Info("Token " + app3scale.UserKey)
+		userKey = app3scale.UserKey
+	}
+
+	return &userKey, nil
 }
 func diffPlans(Plans1 []InternalPlan, Plans2 []InternalPlan) plansDiff {
 

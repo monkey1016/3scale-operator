@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	version    = "v1alpha1"
-	groupName  = "capabilities.3scale.hosted.net"
-	TenantKind = "Tenant"
+	version     = "v1alpha1"
+	groupName   = "capabilities.3scale.hosted.net"
+	TenantKind  = "Tenant"
+	BindingKind = "Binding"
 )
 
 var (

@@ -585,19 +585,20 @@ func (api InternalAPI) getIntegration() Integration {
 }
 
 // createIn3scale Creates the InternalAPI in 3scale
-func (api InternalAPI) createIn3scale(c *portaClient.ThreeScaleClient) error {
+func (api InternalAPI) createIn3scale(c *portaClient.ThreeScaleClient) (*string, error) {
 
+	var userKey *string
 	// Get the proper 3scale deployment Option based on the integrationMethod
 	deploymentOption := IntegrationMethodToDeploymentType[api.getIntegrationName()]
 	if deploymentOption == "" {
-		return fmt.Errorf("unknown integration method")
+		return nil, fmt.Errorf("unknown integration method")
 	}
 
 	// Get the proper backendVersion based on the CredentialType
 
 	backendVersion := CredentialTypeToBackendVersion[api.getIntegration().GetCredentialTypeName()]
 	if backendVersion == "" {
-		return fmt.Errorf("invalid credential type method")
+		return nil, fmt.Errorf("invalid credential type method")
 	}
 
 	params := portaClient.Params{
@@ -608,18 +609,18 @@ func (api InternalAPI) createIn3scale(c *portaClient.ThreeScaleClient) error {
 
 	service, err := c.CreateService(api.Name)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	_, err = c.UpdateService(service.ID, params)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	desiredProxy, err := get3scaleProxyFromInternalAPI(api)
 	proxyParams := getProxyParamsFromProxy(desiredProxy, deploymentOption, backendVersion)
 
 	_, err = c.UpdateProxy(service.ID, proxyParams)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Promote config if needed
@@ -628,26 +629,26 @@ func (api InternalAPI) createIn3scale(c *portaClient.ThreeScaleClient) error {
 	if productionProxy.ProxyConfig.Version != sandboxProxy.ProxyConfig.Version {
 		_, err := c.PromoteProxyConfig(service.ID, "sandbox", strconv.Itoa(sandboxProxy.ProxyConfig.Version), "production")
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	for _, metric := range api.Metrics {
 		_, err := c.CreateMetric(service.ID, metric.Name, metric.Description, metric.Unit)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	defaultMappingRules, err := c.ListMappingRule(service.ID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for _, defaultMappingRule := range defaultMappingRules.MappingRules {
 		err := c.DeleteMappingRule(service.ID, defaultMappingRule.ID)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 	}
@@ -655,12 +656,12 @@ func (api InternalAPI) createIn3scale(c *portaClient.ThreeScaleClient) error {
 	for _, mappingRule := range api.getIntegration().GetMappingRules() {
 		metric, err := metricNametoMetric(c, service.ID, mappingRule.Metric)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		_, err = c.CreateMappingRule(service.ID, strings.ToUpper(mappingRule.Method), mappingRule.Path, int(mappingRule.Increment), metric.ID)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
@@ -669,7 +670,12 @@ func (api InternalAPI) createIn3scale(c *portaClient.ThreeScaleClient) error {
 
 		plan3scale, err := c.CreateAppPlan(service.ID, plan.Name, "publish")
 		if err != nil {
-			return err
+			return nil, err
+		}
+
+		userKey, err = createApplicationforPlan(c, plan3scale)
+		if err != nil {
+			return nil, err
 		}
 		//TODO: add cancellation_period to application Plan
 		params := portaClient.Params{
@@ -680,7 +686,7 @@ func (api InternalAPI) createIn3scale(c *portaClient.ThreeScaleClient) error {
 		}
 		_, err = c.UpdateAppPlan(service.ID, plan3scale.ID, plan3scale.PlanName, "", params)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if plan.Default {
@@ -690,16 +696,19 @@ func (api InternalAPI) createIn3scale(c *portaClient.ThreeScaleClient) error {
 		for _, limit := range plan.Limits {
 			metric, err := metricNametoMetric(c, service.ID, limit.Metric)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			_, err = c.CreateLimitAppPlan(plan3scale.ID, metric.ID, limit.Period, int(limit.MaxValue))
 			if err != nil {
-				return err
+				return nil, err
 			}
 		}
 	}
 
-	return nil
+	if userKey == nil {
+		return nil, fmt.Errorf("User key did not get created")
+	}
+	return userKey, nil
 }
 
 // DeleteFrom3scale Removes an InternalAPI from 3scale
@@ -754,35 +763,42 @@ type APIPair struct {
 }
 
 // reconcileWith3scale creates/modifies/deletes APIs based on the information of the APIsDiff object.
-func (d *APIsDiff) ReconcileWith3scale(creds InternalCredentials) error {
+func (d *APIsDiff) ReconcileWith3scale(creds InternalCredentials) (*string, error) {
 
+	logger.Info("In ReconcileWith3scale()")
+	var userKey *string = nil
 	c, err := helper.PortaClientFromURLString(creds.AdminURL, creds.AuthToken)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for _, api := range d.MissingFromB {
 
-		err := api.createIn3scale(c)
+		logger.Info("Creating API: " + api.Name)
+		currentKey, err := api.createIn3scale(c)
 		if err != nil {
-			return err
+			logger.Error(err, "Error during creation of API in 3scale")
+			return nil, err
 		}
+		userKey = currentKey
+		logger.Info("Created application key: " + *currentKey)
 	}
 
 	for _, api := range d.MissingFromA {
+		logger.Info("Deleting API: " + api.Name)
 		err := api.DeleteFrom3scale(c)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	for _, apiPair := range d.NotEqual {
-
+		logger.Info("Merging diffs for API: " + apiPair.A.Name)
 		serviceNeedsUpdate := false
 		service, err := getServiceFromInternalAPI(c, apiPair.A.Name)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		serviceParams := portaClient.Params{}
 
@@ -814,17 +830,17 @@ func (d *APIsDiff) ReconcileWith3scale(creds InternalCredentials) error {
 		if serviceNeedsUpdate {
 			_, err := c.UpdateService(service.ID, serviceParams)
 			if err != nil {
-				return err
+				return nil, err
 			}
 		}
 
 		desiredProxy, err := get3scaleProxyFromInternalAPI(apiPair.A)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		existingProxy, err := get3scaleProxyFromInternalAPI(apiPair.B)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if desiredProxy != existingProxy {
@@ -833,7 +849,7 @@ func (d *APIsDiff) ReconcileWith3scale(creds InternalCredentials) error {
 
 			_, err = c.UpdateProxy(service.ID, proxyParams)
 			if err != nil {
-				return err
+				return nil, err
 			}
 		}
 
@@ -841,26 +857,25 @@ func (d *APIsDiff) ReconcileWith3scale(creds InternalCredentials) error {
 		metricsDiff := diffMetrics(apiPair.A.Metrics, apiPair.B.Metrics)
 		err = metricsDiff.ReconcileWith3scale(c, service.ID, apiPair.A)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		// reconcileWith3scale Mapping Rules
 		mappingRulesDiff := diffMappingRules(apiPair.A.getIntegration().GetMappingRules(), apiPair.B.getIntegration().GetMappingRules())
 		err = mappingRulesDiff.reconcileWith3scale(c, service.ID, apiPair.A)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		// Because MappingRules are not Unique, let's remove duplicated mappingRules
 
 		// reconcileWith3scale Plans
 		plansDiff := diffPlans(apiPair.A.Plans, apiPair.B.Plans)
-		err = plansDiff.reconcileWith3scale(c, service.ID, apiPair.A)
+		logger.Info("Reconciling plans for existing API: " + apiPair.A.Name)
+		userKey, err = plansDiff.reconcileWith3scale(c, service.ID, apiPair.A)
 		if err != nil {
-			return err
+			return nil, err
 		}
-
-		//
 
 		// Promote config if needed
 		productionProxy, _ := c.GetLatestProxyConfig(service.ID, "production")
@@ -870,12 +885,12 @@ func (d *APIsDiff) ReconcileWith3scale(creds InternalCredentials) error {
 			log.Printf("Not promoted, promoting version %d", sandboxProxy.ProxyConfig.Version)
 			_, err := c.PromoteProxyConfig(service.ID, "sandbox", strconv.Itoa(sandboxProxy.ProxyConfig.Version), "production")
 			if err != nil {
-				return err
+				return nil, err
 			}
 		}
 
 	}
-	return nil
+	return userKey, nil
 
 }
 

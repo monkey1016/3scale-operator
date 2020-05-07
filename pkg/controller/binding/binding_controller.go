@@ -2,10 +2,15 @@ package binding
 
 import (
 	"context"
+	"fmt"
+	"time"
+
 	apiv1alpha1 "github.com/3scale/3scale-operator/pkg/apis/capabilities/v1alpha1"
 	"github.com/3scale/3scale-operator/pkg/helper"
 	"github.com/go-logr/logr"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -15,7 +20,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"time"
 )
 
 var log = logf.Log.WithName("controller_binding")
@@ -233,9 +237,45 @@ func ReconcileBindingFunc(binding apiv1alpha1.Binding, c client.Client, log logr
 	} else {
 		log.Info("State is not in sync, reconciling APIs")
 		apisDiff := apiv1alpha1.DiffAPIs(desiredState.APIs, currentState.APIs)
-		err = apisDiff.ReconcileWith3scale(desiredState.Credentials)
+		var userKey *string = nil
+		userKey, err = apisDiff.ReconcileWith3scale(desiredState.Credentials)
 		if err != nil {
-			log.Error(err, "Error Reconciling APIs")
+			log.Error(err, "Error Reconciling APIs, requeuing")
+			return reconcile.Result{Requeue: true}, err
+		}
+		if userKey != nil {
+			log.Info("Found user-key: " + *userKey)
+			userKeySecret := &v1.Secret{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "v1",
+					Kind:       "Secret",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: binding.Namespace,
+					Name:      "user-key-" + binding.Name,
+				},
+				StringData: map[string]string{
+					"user-key": *userKey,
+				},
+			}
+
+			userKeySecret.SetOwnerReferences(append(userKeySecret.GetOwnerReferences(), asOwner(&binding)))
+
+			existing := &v1.Secret{}
+			err := c.Get(
+				context.TODO(),
+				types.NamespacedName{Name: userKeySecret.Name, Namespace: userKeySecret.Namespace},
+				existing)
+			if err != nil {
+				if errors.IsNotFound(err) {
+					createErr := c.Create(context.TODO(), userKeySecret)
+					if createErr != nil {
+						log.Error(createErr, fmt.Sprintf("Error creating object %s/%s. Requeuing request...", userKeySecret.Namespace, userKeySecret.Name))
+						return reconcile.Result{}, nil
+					}
+				}
+				return reconcile.Result{Requeue: true}, nil
+			}
 		}
 
 		// Refresh the current State
@@ -267,4 +307,15 @@ func ReconcileBindingFunc(binding apiv1alpha1.Binding, c client.Client, log logr
 	}
 
 	return reconcile.Result{RequeueAfter: 1 * time.Minute, Requeue: true}, nil
+}
+
+func asOwner(b *apiv1alpha1.Binding) metav1.OwnerReference {
+	trueVar := true
+	return metav1.OwnerReference{
+		APIVersion: apiv1alpha1.SchemeGroupVersion.String(),
+		Kind:       apiv1alpha1.BindingKind,
+		Name:       b.Name,
+		UID:        b.UID,
+		Controller: &trueVar,
+	}
 }
