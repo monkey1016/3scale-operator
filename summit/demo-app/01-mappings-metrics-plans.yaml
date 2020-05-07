@@ -2,8 +2,8 @@ kind: Metric
 apiVersion: capabilities.3scale.hosted.net/v1alpha1
 metadata:
   labels:
-    api: echo-app4
-  name: echo-app4-metrics
+    api: echo-app
+  name: echo-app-metrics
   namespace: 3scale-apimanager
 spec:
   description: Counts the number of times an endpoint has been hit
@@ -14,22 +14,22 @@ kind: MappingRule
 apiVersion: capabilities.3scale.hosted.net/v1alpha1
 metadata:
   labels:
-    api: echo-app4
-  name: echo-app4-mapping
+    api: echo-app
+  name: echo-app-mapping
   namespace: 3scale-apimanager
 spec:
   increment: 1
   method: GET
   metricRef:
-    name: echo-app4-metrics
+    name: echo-app-metrics
   path: /echo/{id}
 ---
 kind: Plan
 apiVersion: capabilities.3scale.hosted.net/v1alpha1
 metadata:
   labels:
-    api: echo-app4
-  name: echo-app4-plan
+    api: echo-app
+  name: echo-app-plan
   namespace: 3scale-apimanager
 spec:
   approvalRequired: false
@@ -39,5 +39,5 @@ spec:
     setupFee: "0"
   limitSelector:
     matchLabels:
-      api: echo-app4
+      api: echo-app
   trialPeriod: 0

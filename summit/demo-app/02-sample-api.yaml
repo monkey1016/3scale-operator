@@ -4,14 +4,14 @@ apiVersion: capabilities.3scale.hosted.net/v1alpha1
 metadata:
   labels:
     environment: production
-    api: echo-app4
-  name: echo-app4
+    api: echo-app
+  name: echo-app
   namespace: 3scale-apimanager
 spec:
   # No plan selector for this demo
   planSelector:
     matchLabels:
-      api: echo-app4
+      api: echo-app
   description: "Sample echo application"
   integrationMethod:
     apicastOnPrem:
@@ -34,10 +34,10 @@ spec:
         secretToken: someThingIShouldReplaceLater1234
       mappingRulesSelector:
         matchLabels:
-          api: echo-app4
+          api: echo-app
       privateBaseURL: https://echo-api.3scale.net:443
       stagingPublicBaseURL: https://apicast-dev-api-dev.apps.cluster-nyc-3c57.nyc-3c57.example.opentlc.com:443
       productionPublicBaseURL: https://apicast-dev-api-dev.apps.cluster-nyc-3c57.nyc-3c57.example.opentlc.com:443
   metricSelector:
     matchLabels:
-      api: echo-app4
+      api: echo-app
