@@ -60,6 +60,10 @@ func SetURLDefaultPort(rawurl string) string {
 
 	urlObj, _ := url.Parse(rawurl)
 
+	if urlObj.Host == "" {
+		return rawurl
+	}
+
 	if urlObj.Port() != "" {
 		return urlObj.String()
 	}

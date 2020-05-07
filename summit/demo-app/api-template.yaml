@@ -9,6 +9,47 @@ metadata:
     version: 1.0.0
   name: create-3scale-api
 objects:
+- kind: Metric
+  apiVersion: capabilities.3scale.hosted.net/v1alpha1
+  metadata:
+    labels:
+      api: ${SERVICE_NAME}
+    name: ${SERVICE_NAME}-metrics
+    namespace: ${SYSTEM_MASTER_NAMESPACE}
+  spec:
+    description: Counts the number of times an endpoint has been hit
+    unit: hit
+    incrementHits: true
+- kind: MappingRule
+  apiVersion: capabilities.3scale.hosted.net/v1alpha1
+  metadata:
+    labels:
+      api: ${SERVICE_NAME}
+    name: ${SERVICE_NAME}-mapping
+    namespace: ${SYSTEM_MASTER_NAMESPACE}
+  spec:
+    increment: 1
+    method: GET
+    metricRef:
+      name: ${SERVICE_NAME}-metrics
+    path: /person/v1.0/{id}
+- kind: Plan
+  apiVersion: capabilities.3scale.hosted.net/v1alpha1
+  metadata:
+    labels:
+      api: ${SERVICE_NAME}
+    name: ${SERVICE_NAME}-plan
+    namespace: ${SYSTEM_MASTER_NAMESPACE}
+  spec:
+    approvalRequired: false
+    default: true
+    costs:
+      costMonth: "0"
+      setupFee: "0"
+    limitSelector:
+      matchLabels:
+        api: ${SERVICE_NAME}
+    trialPeriod: 0
 - kind: API
   apiVersion: capabilities.3scale.hosted.net/v1alpha1
   metadata:
@@ -50,47 +91,6 @@ objects:
     metricSelector:
       matchLabels:
         api: ${SERVICE_NAME}
-- kind: Metric
-  apiVersion: capabilities.3scale.hosted.net/v1alpha1
-  metadata:
-    labels:
-      api: ${SERVICE_NAME}
-    name: ${SERVICE_NAME}-metrics
-    namespace: ${SYSTEM_MASTER_NAMESPACE}
-  spec:
-    description: Counts the number of times an endpoint has been hit
-    unit: hit
-    incrementHits: true
-- kind: MappingRule
-  apiVersion: capabilities.3scale.hosted.net/v1alpha1
-  metadata:
-    labels:
-      api: ${SERVICE_NAME}
-    name: ${SERVICE_NAME}-mapping
-    namespace: ${SYSTEM_MASTER_NAMESPACE}
-  spec:
-    increment: 1
-    method: POST
-    metricRef:
-      name: ${SERVICE_NAME}-metrics
-    path: /person/v1.0/{id}
-- kind: Plan
-  apiVersion: capabilities.3scale.hosted.net/v1alpha1
-  metadata:
-    labels:
-      api: ${SERVICE_NAME}
-    name: ${SERVICE_NAME}-plan
-    namespace: ${SYSTEM_MASTER_NAMESPACE}
-  spec:
-    approvalRequired: false
-    default: true
-    costs:
-      costMonth: "0"
-      setupFee: "0"
-    limitSelector:
-      matchLabels:
-        api: ${SERVICE_NAME}
-    trialPeriod: 0
 - kind: Binding
   apiVersion: capabilities.3scale.hosted.net/v1alpha1
   metadata:
@@ -99,7 +99,7 @@ objects:
   spec:
     credentialsRef:
       name:  ${TENANT_TOKEN_SECRET}
-      namespace: ${TENANT_TOKEN_NAMESPACE}
+      namespace: ${SECRET_NAMESPACE}
     APISelector:
       matchLabels:
         environment: production
@@ -110,6 +110,9 @@ parameters:
   required: true
 - description: System master namespace
   name: SYSTEM_MASTER_NAMESPACE
+  required: true
+- description: Secret namespace
+  name: SECRET_NAMESPACE
   required: true
 - description: Tenant token to be used to connect through
   name: SECRET_TOKEN
@@ -122,7 +125,4 @@ parameters:
   required: true
 - description: Tenant token secret ref
   name: TENANT_TOKEN_SECRET
-  required: true
-- description: Tenant token secret namespace
-  name: TENANT_TOKEN_NAMESPACE
   required: true

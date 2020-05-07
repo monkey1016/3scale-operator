@@ -15,7 +15,10 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
+
+var logger = logf.Log.WithName("api_types")
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -857,10 +860,14 @@ func (d *APIsDiff) ReconcileWith3scale(creds InternalCredentials) error {
 			return err
 		}
 
+		//
+
 		// Promote config if needed
 		productionProxy, _ := c.GetLatestProxyConfig(service.ID, "production")
 		sandboxProxy, _ := c.GetLatestProxyConfig(service.ID, "sandbox")
+		log.Printf("Latest sandbox version is %d", sandboxProxy.ProxyConfig.Version)
 		if productionProxy.ProxyConfig.Version != sandboxProxy.ProxyConfig.Version {
+			log.Printf("Not promoted, promoting version %d", sandboxProxy.ProxyConfig.Version)
 			_, err := c.PromoteProxyConfig(service.ID, "sandbox", strconv.Itoa(sandboxProxy.ProxyConfig.Version), "production")
 			if err != nil {
 				return err
@@ -1007,30 +1014,30 @@ func CompareInternalAPI(APIA, APIB InternalAPI) bool {
 
 	if APIA.getIntegrationName() != APIB.getIntegrationName() {
 		return false
-	} else {
-		switch APIA.getIntegrationName() {
-		case "ApicastOnPrem":
+	}
 
-			// Always set he port number, because porta adds it automatically and makes the sync fail.
-			APIA.IntegrationMethod.ApicastOnPrem.ProductionPublicBaseURL = helper.SetURLDefaultPort(APIA.IntegrationMethod.ApicastOnPrem.ProductionPublicBaseURL)
-			APIA.IntegrationMethod.ApicastOnPrem.StagingPublicBaseURL = helper.SetURLDefaultPort(APIA.IntegrationMethod.ApicastOnPrem.StagingPublicBaseURL)
+	switch APIA.getIntegrationName() {
+	case "ApicastOnPrem":
+		logger.Info("Production URL: " + APIA.IntegrationMethod.ApicastOnPrem.ProductionPublicBaseURL)
+		// Always set he port number, because porta adds it automatically and makes the sync fail.
+		APIA.IntegrationMethod.ApicastOnPrem.ProductionPublicBaseURL = helper.SetURLDefaultPort(APIA.IntegrationMethod.ApicastOnPrem.ProductionPublicBaseURL)
+		APIA.IntegrationMethod.ApicastOnPrem.StagingPublicBaseURL = helper.SetURLDefaultPort(APIA.IntegrationMethod.ApicastOnPrem.StagingPublicBaseURL)
 
-			APIB.IntegrationMethod.ApicastOnPrem.ProductionPublicBaseURL = helper.SetURLDefaultPort(APIB.IntegrationMethod.ApicastOnPrem.ProductionPublicBaseURL)
-			APIB.IntegrationMethod.ApicastOnPrem.StagingPublicBaseURL = helper.SetURLDefaultPort(APIB.IntegrationMethod.ApicastOnPrem.StagingPublicBaseURL)
+		APIB.IntegrationMethod.ApicastOnPrem.ProductionPublicBaseURL = helper.SetURLDefaultPort(APIB.IntegrationMethod.ApicastOnPrem.ProductionPublicBaseURL)
+		APIB.IntegrationMethod.ApicastOnPrem.StagingPublicBaseURL = helper.SetURLDefaultPort(APIB.IntegrationMethod.ApicastOnPrem.StagingPublicBaseURL)
 
-			for i := range APIA.IntegrationMethod.ApicastOnPrem.MappingRules {
-				APIA.IntegrationMethod.ApicastOnPrem.MappingRules[i].Name = "mapping_rule"
-			}
-			for i := range APIB.IntegrationMethod.ApicastOnPrem.MappingRules {
-				APIB.IntegrationMethod.ApicastOnPrem.MappingRules[i].Name = "mapping_rule"
-			}
-		case "ApicastHosted":
-			for i := range APIA.IntegrationMethod.ApicastHosted.MappingRules {
-				APIA.IntegrationMethod.ApicastHosted.MappingRules[i].Name = "mapping_rule"
-			}
-			for i := range APIB.IntegrationMethod.ApicastHosted.MappingRules {
-				APIB.IntegrationMethod.ApicastHosted.MappingRules[i].Name = "mapping_rule"
-			}
+		for i := range APIA.IntegrationMethod.ApicastOnPrem.MappingRules {
+			APIA.IntegrationMethod.ApicastOnPrem.MappingRules[i].Name = "mapping_rule"
+		}
+		for i := range APIB.IntegrationMethod.ApicastOnPrem.MappingRules {
+			APIB.IntegrationMethod.ApicastOnPrem.MappingRules[i].Name = "mapping_rule"
+		}
+	case "ApicastHosted":
+		for i := range APIA.IntegrationMethod.ApicastHosted.MappingRules {
+			APIA.IntegrationMethod.ApicastHosted.MappingRules[i].Name = "mapping_rule"
+		}
+		for i := range APIB.IntegrationMethod.ApicastHosted.MappingRules {
+			APIB.IntegrationMethod.ApicastHosted.MappingRules[i].Name = "mapping_rule"
 		}
 	}
 
