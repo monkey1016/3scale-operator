@@ -41,5 +41,12 @@ metadata:
 spec:
   finalizers:
   - kubernetes
-
+---
+apiVersion: project.openshift.io/v1
+kind: Project
+metadata:
+  name: api-cicd
+spec:
+  finalizers:
+  - kubernetes
 
