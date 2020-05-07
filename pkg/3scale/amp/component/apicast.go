@@ -64,8 +64,8 @@ func (apicast *Apicast) buildApicastProductionEnv(portalEndpointSecret *string) 
 	result := []v1.EnvVar{}
 	result = append(result, apicast.buildApicastCommonEnv(portalEndpointSecret)...)
 	result = append(result,
-		envVarFromValue("APICAST_CONFIGURATION_LOADER", "boot"),
-		envVarFromValue("APICAST_CONFIGURATION_CACHE", "300"),
+		envVarFromValue("APICAST_CONFIGURATION_LOADER", "lazy"),
+		envVarFromValue("APICAST_CONFIGURATION_CACHE", "0"),
 		envVarFromValue("THREESCALE_DEPLOYMENT_ENV", "production"),
 	)
 	return result
