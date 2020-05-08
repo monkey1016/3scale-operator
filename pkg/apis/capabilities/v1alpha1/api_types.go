@@ -1033,7 +1033,7 @@ func CompareInternalAPI(APIA, APIB InternalAPI) bool {
 
 	switch APIA.getIntegrationName() {
 	case "ApicastOnPrem":
-		logger.Info("Production URL: " + APIA.IntegrationMethod.ApicastOnPrem.ProductionPublicBaseURL)
+		logger.Info("Production URL for " + APIA.Name + ": " + APIA.IntegrationMethod.ApicastOnPrem.ProductionPublicBaseURL)
 		// Always set he port number, because porta adds it automatically and makes the sync fail.
 		APIA.IntegrationMethod.ApicastOnPrem.ProductionPublicBaseURL = helper.SetURLDefaultPort(APIA.IntegrationMethod.ApicastOnPrem.ProductionPublicBaseURL)
 		APIA.IntegrationMethod.ApicastOnPrem.StagingPublicBaseURL = helper.SetURLDefaultPort(APIA.IntegrationMethod.ApicastOnPrem.StagingPublicBaseURL)

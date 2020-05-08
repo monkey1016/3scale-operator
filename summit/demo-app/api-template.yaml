@@ -15,7 +15,7 @@ objects:
     labels:
       api: ${SERVICE_NAME}
     name: ${SERVICE_NAME}-metrics
-    namespace: ${SYSTEM_MASTER_NAMESPACE}
+    namespace: ${SECRET_NAMESPACE}
   spec:
     description: Counts the number of times an endpoint has been hit
     unit: hit
@@ -26,7 +26,7 @@ objects:
     labels:
       api: ${SERVICE_NAME}
     name: ${SERVICE_NAME}-mapping
-    namespace: ${SYSTEM_MASTER_NAMESPACE}
+    namespace: ${SECRET_NAMESPACE}
   spec:
     increment: 1
     method: GET
@@ -39,7 +39,7 @@ objects:
     labels:
       api: ${SERVICE_NAME}
     name: ${SERVICE_NAME}-plan
-    namespace: ${SYSTEM_MASTER_NAMESPACE}
+    namespace: ${SECRET_NAMESPACE}
   spec:
     approvalRequired: false
     default: true
@@ -56,7 +56,7 @@ objects:
     labels:
       environment: production
     name: ${SERVICE_NAME}
-    namespace: ${SYSTEM_MASTER_NAMESPACE}
+    namespace: ${SECRET_NAMESPACE}
   spec:
     # No plan selector for this demo
     planSelector:
@@ -95,7 +95,7 @@ objects:
   apiVersion: capabilities.3scale.hosted.net/v1alpha1
   metadata:
     name: ${SERVICE_NAME}-binding
-    namespace: ${SYSTEM_MASTER_NAMESPACE}
+    namespace: ${SECRET_NAMESPACE}
   spec:
     credentialsRef:
       name:  ${TENANT_TOKEN_SECRET}
