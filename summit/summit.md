@@ -8,7 +8,25 @@ This requires an account on quay.io
    (Careful, could take 15 or so minutes for it to become available)
 
 ## Setup Script
-1. `./summit-setup.sh`
+Once you have a cluster up and running, with cluster admin rights, you can run the following script to get
+everything configured:
+
+```bash
+./summit-setup.sh
+```
+
+It may take up to 30 minutes to provision all the pods required to run 3scale.
+
+### Setup Script Actions
+The setup script creates a number of items in order:
+
+1. Provisions the projects and necessary secrets for the demo
+2. Sets up secrets to pull images from the Red Hat registry (requires you log in using `docker login` prior
+to running this command)
+3. Creates the necessary Custom Resource Definitions
+4. Creates the service accounts, roles, and sets up the role bindings
+5. Deploys the Operator
+6. Provisions the API Manager and APICasts using the `APIManager` Custom Resource Definition
 
 ## Step by Step Install
 1. Assign 6 CPUs and at least 18GB or RAM to CodeReady Containers

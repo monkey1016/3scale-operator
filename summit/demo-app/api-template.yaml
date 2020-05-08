@@ -108,9 +108,6 @@ parameters:
 - description: API Service Name
   name: SERVICE_NAME
   required: true
-- description: System master namespace
-  name: SYSTEM_MASTER_NAMESPACE
-  required: true
 - description: Secret namespace
   name: SECRET_NAMESPACE
   required: true
