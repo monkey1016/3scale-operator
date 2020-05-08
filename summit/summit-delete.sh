@@ -38,7 +38,7 @@ oc delete -f ${SCRIPT_DIR}/../deploy/cluster_role.yaml
 oc -n 3scale-operator delete -f ${SCRIPT_DIR}/../deploy/service_account.yaml
 
 
-for i in 3scale-operator1 3scale-apimanager api-dev api-uat api-prod api-cicd
+for i in 3scale-operator 3scale-apimanager api-dev api-uat api-prod api-cicd
 do
   oc delete project $i
 done
