@@ -17,7 +17,7 @@ For provisioning a cluster, you have several options:
 * RHPDS [Insert instructions for provisioning a cluster] (could have a cost associated with it)
 * [CodeReady Containers](#crc_install) with sufficient resources
 
-## Setup Script <a name="setup_script></a>
+## Setup Script <a name="setup_script"></a>
 Once you have a cluster up and running, with cluster admin rights, update the `summit/api-manager.yaml` file
 by providing the right value for `wildcardDomain`. For example, if your cluster name is located at
 `cluster-nyc-3c57.nyc-3c57.example.opentlc.com`, the `wildcardDomain` could be
@@ -54,7 +54,7 @@ to running this command)
 Once the cluster is up, proceed to run the [setup script](#setup_script)
 
 ## Creating an API
-See API Demo for a full example.
+See [API Demo](https://gitlab.consulting.redhat.com/summit-3scale-api-versioning/api-versioning-operators) for a full example.
 
 You can create a simple API using the provided template:
 
