@@ -1,5 +1,8 @@
 # 3scale-operator
 
+> For directions on how to run the custom operator, see [Summit instructions](summit/summit.md)
+
+
 [![CircleCI](https://circleci.com/gh/3scale/3scale-operator/tree/master.svg?style=svg)](https://circleci.com/gh/3scale/3scale-operator/tree/master)
 
 This software is licensed under the [Apache 2.0 license](https://www.apache.org/licenses/LICENSE-2.0).
